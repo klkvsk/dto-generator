@@ -1,0 +1,5 @@
+.idea
+*.iml
+/vendor
+example/generated/*
+composer.lock

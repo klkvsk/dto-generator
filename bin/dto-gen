@@ -1,0 +1,76 @@
+#!/usr/bin/env php
+<?php
+
+use splitbrain\phpcli\{CLI, Options};
+use Klkvsk\DtoGenerator\DtoGenerator;
+use Klkvsk\DtoGenerator\Exception\GeneratorException;
+use Klkvsk\DtoGenerator\Schema\Schema;
+
+new class($argv) {
+    public function __construct()
+    {
+        $this->autoload();
+        $this->run();
+    }
+
+    public function run()
+    {
+        $cli = new class extends \splitbrain\phpcli\PSR3CLIv3 {
+            protected function setup(Options $options)
+            {
+                $options->setHelp(
+                    'Generates pure DTO classes with zero runtime dependencies'
+                );
+                $options->registerArgument('file', 'Schema file(s)', false);
+                $options->registerOption('enums', 'Generate native enums (PHP >= 8.0)', 'e');
+                $options->registerOption('promoted', 'Use promoted properties in generated classes (PHP >= 8.1)', 'p');
+                $options->registerOption('callables', 'Use first-class callable syntax for closures (PHP >= 8.1)', 'c');
+            }
+
+            protected function main(Options $options)
+            {
+                $files = $options->getArgs();
+                if ($files) {
+                    DtoGenerator::$usePhpEnums = $options->getOpt('enums');
+                    DtoGenerator::$usePromotedParameters = $options->getOpt('promoted');
+                    DtoGenerator::$useFirstClassCallableSyntax = $options->getOpt('callables');
+                    try {
+                        $generator = new DtoGenerator();
+                        foreach ($files as $file) {
+                            if (!file_exists($file)) {
+                                throw new GeneratorException("File was not found: $file");
+                            }
+                            $schema = require $file;
+                            if (! $schema instanceof Schema) {
+                                throw new GeneratorException("Schema was not returned from $file");
+                            }
+                            $generator->setLogger($this);
+                            $generator->write($schema, __DIR__);
+                        }
+                    } catch (\Klkvsk\DtoGenerator\Exception\Exception $e) {
+                        $this->error($e->getMessage());
+                        exit(1);
+                    }
+                } else {
+                    echo $options->help();
+                }
+            }
+        };
+        $cli->run();
+    }
+
+    protected function autoload()
+    {
+        $autoloadPaths = [
+            $GLOBALS['_composer_autoload_path'] ?? null,
+            __DIR__ . '/../../../autoload.php',
+            __DIR__ . '/../vendor/autoload.php',
+        ];
+        foreach ($autoloadPaths as $file) {
+            if ($file && file_exists($file)) {
+                require $file;
+                return;
+            }
+        }
+    }
+};

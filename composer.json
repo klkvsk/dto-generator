@@ -1,0 +1,33 @@
+{
+    "name": "klkvsk/dto-generator",
+    "description": "Generate DTO classes with zero runtime dependencies",
+    "type": "library",
+    "bin": [
+        "bin/dto-gen"
+    ],
+    "autoload": {
+        "psr-4": {
+            "Klkvsk\\DtoGenerator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Klkvsk\\DtoGenerator\\Example\\": "example/generated"
+        }
+    },
+    "authors": [
+        {
+            "name": "klkvsk",
+            "email": "m@klkvsk.ru"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "nette/php-generator": "^4.0",
+        "opis/closure": "^3.6",
+        "psr/log": "^3.0",
+        "ulrichsg/getopt-php": "^4.0",
+        "splitbrain/php-cli": "^1.2"
+    }
+}
