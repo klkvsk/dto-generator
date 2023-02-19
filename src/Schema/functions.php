@@ -19,7 +19,7 @@ function enum(string $name, array $cases, EnumValues $enumKeys = EnumValues::AUT
  * @param string $name
  * @param iterable<Field> $fields
  * @param list<class-string> $implements
- * @param list<class-string> $extends
+ * @param null|class-string $extends
  * @param list<class-string> $uses
  */
 function object(

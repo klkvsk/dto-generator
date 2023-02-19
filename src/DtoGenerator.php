@@ -541,7 +541,7 @@ class DtoGenerator implements LoggerAwareInterface
             }
         }
 
-        return throw new SchemaException(
+        throw new SchemaException(
             "Output dir for '$schema->namespace' is unknown. "
             . "\nUsually it is guessed by PSR-4/PSR-0 auto-loading prefixes. "
             . "\nCheck your composer.json, or specify 'outputDir' in Schema constructor directly."

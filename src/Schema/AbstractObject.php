@@ -21,7 +21,7 @@ abstract class AbstractObject
         $originalConstructorTrace = null;
         while (!empty($traces)) {
             $trace = array_shift($traces);
-            if (isset($trace['class']) && $trace['class'] && is_a($trace['class'], self::class, true)) {
+            if (isset($trace['class']) && is_a($trace['class'], self::class, true)) {
                 $originalConstructorTrace = $trace;
             } else {
                 break;

@@ -33,5 +33,10 @@
         "psr/log": "^3.0",
         "ulrichsg/getopt-php": "^4.0",
         "splitbrain/php-cli": "^1.2"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.14",
+        "phpunit/phpunit": "^10.0",
+        "vimeo/psalm": "^5.7"
     }
 }
