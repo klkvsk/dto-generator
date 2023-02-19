@@ -54,17 +54,19 @@ final class Virtualizer
     /**
      * @throws GeneratorException
      */
-    public static function register(PhpNamespace $namespace): void
+    public static function register(PhpNamespace ...$namespace): void
     {
-        $key = md5($namespace->getName());
-        if (in_array($key, stream_get_wrappers())) {
-            throw new GeneratorException("stream wrapper '$key' is already registered");
+        foreach ($namespace as $ns) {
+            $key = md5($ns->getName());
+            if (in_array($key, stream_get_wrappers())) {
+                throw new GeneratorException("stream wrapper '$key' is already registered");
+            }
+
+            self::$map[$key] = $ns;
+
+            stream_wrapper_register($key, self::class);
+            spl_autoload_register(fn ($className) => require("$key://$className"));
         }
-
-        self::$map[$key] = $namespace;
-
-        stream_wrapper_register($key, self::class);
-        spl_autoload_register(fn ($className) => require("$key://$className"));
     }
 
     /** @throws GeneratorException */

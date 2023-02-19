@@ -1,6 +1,8 @@
+.git
 .idea
 *.iml
 /vendor
-example/generated/*
-composer.lock
-.php-cs-fixer.cache
+/example/generated/*
+/composer.lock
+/.php-cs-fixer.cache
+/.phpunit.cache

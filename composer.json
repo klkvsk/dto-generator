@@ -16,6 +16,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Klkvsk\\DtoGenerator\\Test\\": "tests",
             "Klkvsk\\DtoGenerator\\Example\\": "example/generated"
         }
     },
