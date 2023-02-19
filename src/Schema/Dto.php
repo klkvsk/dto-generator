@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Schema;
 
-
 class Dto extends AbstractObject
 {
     /**
@@ -24,8 +23,7 @@ class Dto extends AbstractObject
         public readonly array $implements = [],
         public readonly array $uses = [],
         iterable $fields = [],
-    )
-    {
+    ) {
         parent::__construct($name);
         $this->fields = new \ArrayObject();
         foreach ($fields as $field) {

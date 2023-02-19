@@ -3,3 +3,4 @@
 /vendor
 example/generated/*
 composer.lock
+.php-cs-fixer.cache

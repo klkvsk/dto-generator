@@ -9,5 +9,4 @@ class EnumType extends GeneratedType
     {
         return 'from';
     }
-
 }

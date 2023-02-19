@@ -11,7 +11,6 @@ class ListType extends Type
     public function __construct(
         public readonly Type $elementType,
     ) {
-
     }
 
     public function buildTypeId(Schema $schema): string
@@ -37,6 +36,4 @@ class ListType extends Type
             (array)$array
         );
     }
-
-
 }

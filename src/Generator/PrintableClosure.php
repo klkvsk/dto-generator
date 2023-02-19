@@ -41,6 +41,4 @@ class PrintableClosure
     {
         return $this->code;
     }
-
-
 }

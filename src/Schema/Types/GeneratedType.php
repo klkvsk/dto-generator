@@ -8,7 +8,8 @@ use Klkvsk\DtoGenerator\Schema\Schema;
 
 abstract class GeneratedType extends Type
 {
-    public function __construct(protected readonly string $objectName) {
+    public function __construct(protected readonly string $objectName)
+    {
     }
 
     abstract protected function getCreatorMethod(): string;

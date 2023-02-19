@@ -25,7 +25,7 @@ trait Cloneable
                 if ($declarationScope == self::class) {
                     $clone->$objectField = $objectValue;
                 } else {
-                    (fn() => $this->$objectField = $objectValue)
+                    (fn () => $this->$objectField = $objectValue)
                         ->bindTo($clone, $declarationScope)();
                 }
             }
@@ -34,7 +34,6 @@ trait Cloneable
                 $clone = clone $clone;
             }
             return $clone;
-
         } catch (ReflectionException $e) {
             throw new SchemaException('Could not clone ' . get_class($this), 0, $e);
         }

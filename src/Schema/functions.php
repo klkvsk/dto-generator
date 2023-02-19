@@ -28,15 +28,17 @@ function object(
     iterable $implements = [],
     iterable $uses = [],
     iterable $fields = [],
-): Dto
-{
+): Dto {
     return new Dto($name, $extends, $implements, $uses, $fields);
 }
 
 function field(
-    string $name, Type $type, bool $required = false, mixed $default = null,
-    array  $filters = [], array $validators = []
-): Field
-{
+    string $name,
+    Type $type,
+    bool $required = false,
+    mixed $default = null,
+    array  $filters = [],
+    array $validators = []
+): Field {
     return new Field($name, $type, $required, $default, $filters, $validators);
 }

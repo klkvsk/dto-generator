@@ -17,5 +17,4 @@ class MixedType extends Type
     {
         return DtoGenerator::$useMixedType ? 'mixed' : '';
     }
-
 }

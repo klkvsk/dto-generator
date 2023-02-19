@@ -14,8 +14,8 @@ use Klkvsk\DtoGenerator\Schema\AbstractObject;
 use Klkvsk\DtoGenerator\Schema\Dto;
 use Klkvsk\DtoGenerator\Schema\Enum;
 use Klkvsk\DtoGenerator\Schema\Field;
-use Klkvsk\DtoGenerator\Schema\Types\ListType;
 use Klkvsk\DtoGenerator\Schema\Schema;
+use Klkvsk\DtoGenerator\Schema\Types\ListType;
 use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\EnumType;
@@ -86,9 +86,10 @@ class DtoGenerator implements LoggerAwareInterface
     protected function writeClass(PhpNamespace $ns, ClassLike $class, string $file): void
     {
         $dir = dirname($file);
-        if (!file_exists($dir)) {
-            if (!@mkdir($dir, 0777, true)) {
+        if (! file_exists($dir)) {
+            if (! @mkdir($dir, 0777, true)) {
                 $error = error_get_last();
+
                 throw new GeneratorException("Path '$dir' could not be created: {$error['message']}");
             }
         }
@@ -103,7 +104,7 @@ class DtoGenerator implements LoggerAwareInterface
         $oldCode = file_exists($file) ? file_get_contents($file) : '';
         $diff = $oldCode != $code;
         if ($diff) {
-            if (!@file_put_contents($file, $code)) {
+            if (! @file_put_contents($file, $code)) {
                 $error = error_get_last() ?: [ 'message' => 'unknown error'];
                 throw new GeneratorException("File '$file is not writable: {$error['message']}");
             }
@@ -230,7 +231,7 @@ class DtoGenerator implements LoggerAwareInterface
         }
 
         $casesMethod->addBody('return self::$map = self::$map \?: ?;', [
-            $casesMap
+            $casesMap,
         ]);
 
         return $enum;
@@ -292,7 +293,7 @@ class DtoGenerator implements LoggerAwareInterface
             $fields->uasort(fn (Field $a, Field $b) => $b->required <=> $a->required);
         }
         foreach ($fields as $field) {
-            $isNullable = !$field->required;
+            $isNullable = ! $field->required;
             if ($field->type instanceof ListType) {
                 $isNullable = false;
             }
@@ -316,7 +317,7 @@ class DtoGenerator implements LoggerAwareInterface
             $assigner = "\$$field->name";
             if ($field->type instanceof ListType && static::$buildListTypeChecks) {
                 $assigner = sprintf(
-                    'array_map(fn(%s $_) => $_, %s)',
+                    'array_map(fn (%s $_) => $_, %s)',
                     $ns->simplifyName($field->type->elementType->buildTypeId($object->schema)),
                     "$$field->name"
                 );
@@ -347,7 +348,7 @@ class DtoGenerator implements LoggerAwareInterface
 
                 if ($field->default !== null || $isNullable) {
                     $property->setValue($field->default);
-                } else if ($field->type instanceof ListType) {
+                } elseif ($field->type instanceof ListType) {
                     $property->setValue([]);
                 }
 
@@ -369,7 +370,7 @@ class DtoGenerator implements LoggerAwareInterface
 
             if ($field->default !== null || $isNullable) {
                 $parameter->setDefaultValue($field->default);
-            } else if ($field->type instanceof ListType) {
+            } elseif ($field->type instanceof ListType) {
                 $parameter->setDefaultValue([]);
             }
 
@@ -401,18 +402,18 @@ class DtoGenerator implements LoggerAwareInterface
         $requiredMethod->addBody('return ?;', [ $requiredArray ]);
 
 
-        if (!$hasDefaults) {
+        if (! $hasDefaults) {
             $class->removeMethod('defaults');
         }
-        if (!$hasRequired) {
+        if (! $hasRequired) {
             $class->removeMethod('required');
         }
-        if (!$hasProcessors) {
+        if (! $hasProcessors) {
             $class->removeMethod('processors');
         }
 
         $hasCreator = static::$buildCreateMethods;
-        if (!$hasCreator) {
+        if (! $hasCreator) {
             $class->removeMethod('creator');
         } else {
             if ($hasDefaults) {
@@ -459,7 +460,6 @@ class DtoGenerator implements LoggerAwareInterface
 
             $creator->addParameter('data')
                 ->setType('array');
-
         }
 
         return $class;
@@ -467,7 +467,7 @@ class DtoGenerator implements LoggerAwareInterface
 
     protected function buildComment(AbstractObject $o): string
     {
-        if (!static::$buildFileComments) {
+        if (! static::$buildFileComments) {
             return '';
         }
         $doc = "This class is auto-generated with klkvsk/dto-generator\n"
@@ -479,7 +479,7 @@ class DtoGenerator implements LoggerAwareInterface
                 if ($rootDir === false) {
                     throw new GeneratorException();
                 }
-                if (!str_starts_with($o->declaredInFile, $rootDir)) {
+                if (! str_starts_with($o->declaredInFile, $rootDir)) {
                     throw new GeneratorException();
                 }
                 $pathRelativeToRoot = substr($o->declaredInFile, strlen($rootDir) + 1);
@@ -517,7 +517,7 @@ class DtoGenerator implements LoggerAwareInterface
             foreach ([ 'psr0' => $psr0Prefixes, 'psr4' => $psr4Prefixes ] as $psr => $prefixesBundle) {
                 foreach ($prefixesBundle as $prefixNs => $prefixes) {
                     foreach ($prefixes as $prefix) {
-                        if (!str_starts_with($schema->namespace, $prefixNs)) {
+                        if (! str_starts_with($schema->namespace, $prefixNs)) {
                             continue;
                         }
                         $namespace = $schema->namespace;
@@ -531,10 +531,15 @@ class DtoGenerator implements LoggerAwareInterface
                         $fullPathParts = preg_split('#[/\\\]#', $fullPath, -1, PREG_SPLIT_NO_EMPTY);
                         $normalizedPathParts = [ '' ];
                         foreach ($fullPathParts as $dir) {
-                            if ($dir == '.') continue;
-                            else if ($dir == '..') array_pop($normalizedPathParts);
-                            else $normalizedPathParts []= $dir;
+                            if ($dir == '.') {
+                                continue;
+                            } elseif ($dir == '..') {
+                                array_pop($normalizedPathParts);
+                            } else {
+                                $normalizedPathParts [] = $dir;
+                            }
                         }
+
                         return implode(DIRECTORY_SEPARATOR, $normalizedPathParts);
                     }
                 }

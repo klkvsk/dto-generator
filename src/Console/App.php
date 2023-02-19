@@ -54,11 +54,11 @@ class App extends PSR3CLIv3
         try {
             $generator = new DtoGenerator();
             foreach ($files as $file) {
-                if (!file_exists($file)) {
+                if (! file_exists($file)) {
                     throw new GeneratorException("File was not found: $file");
                 }
                 $schema = require $file;
-                if (!$schema instanceof Schema) {
+                if (! $schema instanceof Schema) {
                     throw new GeneratorException("Schema was not returned from $file");
                 }
                 $generator->setLogger($this);
@@ -79,7 +79,8 @@ class App extends PSR3CLIv3
         if ($projectDir) {
             $projectFiles = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator(
-                    $projectDir, \FilesystemIterator::CURRENT_AS_PATHNAME
+                    $projectDir,
+                    \FilesystemIterator::CURRENT_AS_PATHNAME
                 )
             );
             foreach ($projectFiles as $projectFile) {

@@ -27,15 +27,14 @@ class Schema
         public readonly ?string $namespace = null,
         public readonly ?string $outputDir = null,
         iterable $objects = [],
-    )
-    {
+    ) {
         $this->enums = new ArrayObject();
         $this->dtos = new ArrayObject();
 
         foreach ($objects as $object) {
             if ($object instanceof Dto) {
                 $this->dto($object);
-            } else if ($object instanceof Enum) {
+            } elseif ($object instanceof Enum) {
                 $this->enum($object);
             } else {
                 throw new SchemaException("Can not add this type: " . get_debug_type($object));
@@ -66,11 +65,10 @@ class Schema
         $object = $this->dtos[$name] ?? $this->enums[$name] ?? null;
         if ($object) {
             return $object;
-        } else if ($name[0] !== '\\') {
+        } elseif ($name[0] !== '\\') {
             return $this->findObject("\\$this->namespace\\$name");
         } else {
             return null;
         }
     }
-
 }

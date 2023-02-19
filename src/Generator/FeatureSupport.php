@@ -36,9 +36,12 @@ class FeatureSupport
     {
         if (version_compare($targetVersion, self::PHP_MIN_VERSION) < 0) {
             throw new GeneratorException(
-                sprintf('Can not build for PHP %s. Minimal supported version is %s',
-                $targetVersion, self::PHP_MIN_VERSION
-            ));
+                sprintf(
+                    'Can not build for PHP %s. Minimal supported version is %s',
+                    $targetVersion,
+                    self::PHP_MIN_VERSION
+                )
+            );
         }
         $level = self::PHP_MIN_VERSION;
 

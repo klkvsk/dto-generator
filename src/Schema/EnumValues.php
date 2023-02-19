@@ -23,8 +23,8 @@ enum EnumValues
         }
 
         return match ($mode) {
-            self::ZERO  => array_values($array),
-            self::ONE   => array_combine(
+            self::ZERO => array_values($array),
+            self::ONE => array_combine(
                 range(1, count($array)),
                 $array,
             ),

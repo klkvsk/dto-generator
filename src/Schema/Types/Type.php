@@ -11,7 +11,8 @@ abstract class Type
 
     abstract public function buildTypeId(Schema $schema): string;
 
-    public function buildTypeHint(Schema $schema): string {
+    public function buildTypeHint(Schema $schema): string
+    {
         return $this->buildTypeId($schema);
     }
 }

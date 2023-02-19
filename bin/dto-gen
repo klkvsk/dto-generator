@@ -4,7 +4,7 @@
 use Klkvsk\DtoGenerator\Console\App;
 
 array_map(
-    fn($file) => !class_exists('Composer\Autoload\ClassLoader')
+    fn ($file) => !class_exists('Composer\Autoload\ClassLoader')
         && $file && file_exists($file) && require_once $file,
     [
         $GLOBALS['_composer_autoload_path'] ?? null,

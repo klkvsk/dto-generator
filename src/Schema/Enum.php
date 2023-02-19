@@ -14,16 +14,14 @@ class Enum extends AbstractObject
         array      $cases,
         EnumValues $enumKeys = EnumValues::AUTO,
         ?string    $backedType = null,
-    )
-    {
+    ) {
         parent::__construct($name);
 
-        if (!$backedType && ($enumKeys == EnumValues::ONE || $enumKeys == EnumValues::ZERO)) {
+        if (! $backedType && ($enumKeys == EnumValues::ONE || $enumKeys == EnumValues::ZERO)) {
             $backedType = 'int';
         }
 
         $this->cases = $enumKeys->process($cases);
         $this->backedType = $backedType;
     }
-
 }

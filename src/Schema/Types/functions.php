@@ -41,7 +41,8 @@ function date(DateTimeZone $dateTimeZone = null, string $format = null): Type
     } else {
         $importer = static fn ($d) => new DateTimeImmutable($d, $dateTimeZone);
     }
-    return external(DateTimeInterface::class, $importer);}
+    return external(DateTimeInterface::class, $importer);
+}
 
 /**
  * @param class-string<Dto>|Dto $dto

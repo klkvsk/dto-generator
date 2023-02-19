@@ -19,7 +19,7 @@ abstract class AbstractObject
     {
         $traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5);
         $originalConstructorTrace = null;
-        while (!empty($traces)) {
+        while (! empty($traces)) {
             $trace = array_shift($traces);
             if (isset($trace['class']) && is_a($trace['class'], self::class, true)) {
                 $originalConstructorTrace = $trace;
@@ -61,5 +61,4 @@ abstract class AbstractObject
         }
         return $this->with(schema: $schema, name: $name);
     }
-
 }

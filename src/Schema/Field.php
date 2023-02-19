@@ -17,9 +17,6 @@ class Field
         public readonly array  $filters = [],
         /** @var \Closure[] */
         public readonly array  $validators = [],
-    )
-    {
+    ) {
     }
-
-
 }

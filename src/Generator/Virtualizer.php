@@ -64,14 +64,14 @@ final class Virtualizer
         self::$map[$key] = $namespace;
 
         stream_wrapper_register($key, self::class);
-        spl_autoload_register(fn ($className) => require ("$key://$className"));
+        spl_autoload_register(fn ($className) => require("$key://$className"));
     }
 
     /** @throws GeneratorException */
     public function stream_open($path, $mode, $options, &$opened_path): bool
     {
         [ $key, $className ] = explode('://', $path);
-        if (!array_key_exists($key, self::$map)) {
+        if (! array_key_exists($key, self::$map)) {
             throw new GeneratorException("virtualizer '$key' is not registered");
         }
 
@@ -108,7 +108,7 @@ final class Virtualizer
         return $part;
     }
 
-    function stream_tell(): int
+    public function stream_tell(): int
     {
         return $this->pos;
     }

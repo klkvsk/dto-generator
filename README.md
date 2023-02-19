@@ -5,13 +5,13 @@
 
 # Generate DTO classes with zero runtime dependencies
 
-This package allows you to generate clean and independent DTO-classes 
+This package allows you to generate clean and independent DTO-classes
 (also called "value objects") by briefly declared schema in PHP-code.
 
 ## Installation
 
 You only need this package while development, since generated classes
-do not use anything from this library's code. That is why the preferred 
+do not use anything from this library's code. That is why the preferred
 way is to include it as `require-dev`:
 
     $ composer require --dev klkvsk/dto-generator
@@ -20,7 +20,7 @@ way is to include it as `require-dev`:
 
 ### 1. Create schema-file
 
-Schema is a regular PHP-file anywhere in your project. 
+Schema is a regular PHP-file anywhere in your project.
 The file should return a `Schema` object from top level.
 
 Example schema:
@@ -51,12 +51,12 @@ Code generation is done with `dto-gen` command:
 $ ./vendor/bin/dto-gen [schema-file]
 ```
 
-By default, generator searches for files named or ending with `dto.schema.php`, 
+By default, generator searches for files named or ending with `dto.schema.php`,
 but you can provide schema files manually as arguments.
 
 Generator will try to guess the right path for output by
 looking at autoload paths in composer.json. If it states PSR-4 mapping
-for `"MyProject\\": "src/"` then the file above will be placed 
+for `"MyProject\\": "src/"` then the file above will be placed
 in `src/Data/Person.php`.
 
 To override this behaviour, you can specify `outputDir` directly:
@@ -95,7 +95,7 @@ dto\schema(
     ]
 )
 ```
-For PHP >= 8.0 native enums will be generated, 
+For PHP >= 8.0 native enums will be generated,
 for older versions a very similar class-based implementation is used.
 
 ### Type system
@@ -105,7 +105,7 @@ DTOs serve a purpose to keep your data strongly typed. Types for schema are:
 - `t\enum`, `t\object` - for referencing other DTO objects
 - `t\date` - using DateTimeImmutable
 - `t\external` - for referencing any other non-DTO classes
-- `t\list_(T)` - wraps around type T to declare T[] 
+- `t\list_(T)` - wraps around type T to declare T[]
 - `t\mixed` - if you really don't know
 
 (where `t` is an alias to `Klkvsk\DtoGenerator\Schema\Types`)
@@ -114,8 +114,8 @@ Also, you can extend the abstract `Type` class for your needs.
 
 ### Hydration, filtering and validation
 
-Each generated DTO have a static method `<DTO>::create(array $data)` 
-that instantiates and fill it with `$data`. 
+Each generated DTO have a static method `<DTO>::create(array $data)`
+that instantiates and fill it with `$data`.
 
 Hydration of properties is done with a chain of closures of three types (defined in `<DTO>::processors()`):
 1. `filter` prepares data to be imported
@@ -137,23 +137,23 @@ protected static function processors(string $key): \Generator
 }
 ```
 
-`filter` and `importer` closures should return processed value. 
+`filter` and `importer` closures should return processed value.
 If a `null` is returned, further closures are not called.
 
-`validator` returns true/false, and on false an `InvalidArgumentException` 
-is thrown automatically. Also, you can throw your own exception and don't return anything.   
+`validator` returns true/false, and on false an `InvalidArgumentException`
+is thrown automatically. Also, you can throw your own exception and don't return anything.
 
 Closures of type `filter` and `validator` are defined in schema:
 ```
-dto\field('age', t\int(), 
-    filters: [ fn($x) => preg_replace('/[^0-9]+/', $x) ],
-    validators: [ fn($x) => $x > 0 && $x < 100 ]
-) 
+dto\field('age', t\int(),
+    filters: [ fn ($x) => preg_replace('/[^0-9]+/', $x) ],
+    validators: [ fn ($x) => $x > 0 && $x < 100 ]
+)
 ```
 
 Closure of type `importer` is predefined for all types except `t\object`:
 ```
-dto\field('file', t\external(SplFileInfo::class, fn($x) => new SplFileInfo($x))
+dto\field('file', t\external(SplFileInfo::class, fn ($x) => new SplFileInfo($x))
 ```
 
 
