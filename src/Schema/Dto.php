@@ -11,7 +11,20 @@ class Dto extends AbstractObject
      */
     public readonly \ArrayObject $fields;
 
-    public function __construct(string $name, iterable $fields)
+    /**
+     * @param string $name
+     * @param null|class-string $extends
+     * @param list<class-string> $implements
+     * @param list<class-string> $uses
+     * @param iterable<Field> $fields
+     */
+    public function __construct(
+        string $name,
+        public readonly ?string $extends = null,
+        public readonly array $implements = [],
+        public readonly array $uses = [],
+        iterable $fields = [],
+    )
     {
         parent::__construct($name);
         $this->fields = new \ArrayObject();

@@ -248,6 +248,16 @@ class DtoGenerator implements LoggerAwareInterface
 
         $class->addComment($this->buildComment($object));
 
+        foreach ($object->implements as $interface) {
+            $class->addImplement($ns->simplifyName($interface));
+        }
+        foreach ($object->uses as $trait) {
+            $class->addTrait($ns->simplifyName($trait));
+        }
+        if ($object->extends) {
+            $class->setExtends($ns->simplifyName($object->extends));
+        }
+
         $constructor = $class->addMethod('__construct')
             ->setPublic();
 

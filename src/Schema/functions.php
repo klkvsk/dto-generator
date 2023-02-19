@@ -15,9 +15,22 @@ function enum(string $name, array $cases, EnumValues $enumKeys = EnumValues::AUT
     return new Enum($name, $cases, $enumKeys, $backedType);
 }
 
-function object(string $name, iterable $fields): Dto
+/**
+ * @param string $name
+ * @param iterable<Field> $fields
+ * @param list<class-string> $implements
+ * @param list<class-string> $extends
+ * @param list<class-string> $uses
+ */
+function object(
+    string $name,
+    ?string $extends = null,
+    iterable $implements = [],
+    iterable $uses = [],
+    iterable $fields = [],
+): Dto
 {
-    return new Dto($name, $fields);
+    return new Dto($name, $extends, $implements, $uses, $fields);
 }
 
 function field(
