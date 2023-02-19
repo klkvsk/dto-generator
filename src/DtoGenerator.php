@@ -1,17 +1,22 @@
 <?php
+declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator;
 
+use ArrayObject;
 use Composer\Autoload\ClassLoader;
 use Composer\InstalledVersions;
 use Klkvsk\DtoGenerator\Exception\Exception;
 use Klkvsk\DtoGenerator\Exception\GeneratorException;
 use Klkvsk\DtoGenerator\Exception\SchemaException;
-use Klkvsk\DtoGenerator\Generator\Closure;
+use Klkvsk\DtoGenerator\Generator\PrintableClosure;
 use Klkvsk\DtoGenerator\Schema\AbstractObject;
-use Klkvsk\DtoGenerator\Schema\DTO;
+use Klkvsk\DtoGenerator\Schema\Dto;
 use Klkvsk\DtoGenerator\Schema\Enum;
+use Klkvsk\DtoGenerator\Schema\Field;
+use Klkvsk\DtoGenerator\Schema\Types\ListType;
 use Klkvsk\DtoGenerator\Schema\Schema;
+use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\EnumType;
 use Nette\PhpGenerator\Literal;
@@ -31,7 +36,13 @@ class DtoGenerator implements LoggerAwareInterface
     public static bool $usePromotedParameters = false;
     public static bool $usePhpEnums = false;
     public static bool $useFirstClassCallableSyntax = false;
+    public static bool $useMixedType = false;
+    public static bool $useCreatorVariadic = false;
 
+    public static bool $buildListTypeChecks = true;
+    public static bool $buildCreateMethods = true;
+    public static bool $buildFileComments = true;
+    public static bool $buildRequiredFieldsFirst = true;
 
     protected Printer $printer;
 
@@ -47,63 +58,95 @@ class DtoGenerator implements LoggerAwareInterface
     public function write(Schema $schema): void
     {
         $this->logger->debug("Building schema '$schema->namespace'");
-        $ns = $this->build($schema);
+        $namespaces = $this->build($schema);
         $outputDir = $this->getOutputDir($schema);
         $this->logger->debug("Writing schema '$schema->namespace'");
-        foreach ($ns->getClasses() as $class) {
-            $file = $outputDir . '/' . $class->getName() . '.php';
-            $dir = dirname($file);
-            if (!file_exists($dir)) {
-                if (!@mkdir($dir, 0777, true)) {
-                    $error = error_get_last();
-                    $this->logger->error("Path '$dir' could not be created: {$error['message']}");
-                    exit();
-                }
+        foreach ($namespaces as $namespace) {
+            $relativeNamespace = substr($namespace->getName(), strlen($schema->namespace) + 1);
+            $relativeDir = null;
+            if ($relativeNamespace) {
+                $relativeDir = str_replace('\\', DIRECTORY_SEPARATOR, $relativeNamespace);
             }
-
-            assert($class instanceof EnumType || $class instanceof ClassType);
-            $code = "<?php\n"
-                . "declare(strict_types=1);\n\n"
-                . "namespace {$ns->getName()};\n\n"
-                . $this->printer->printClass($class, $ns);
-
-            $oldCode = file_exists($file) ? file_get_contents($file) : '';
-            $diff = $oldCode != $code;
-            if ($diff) {
-                if (!@file_put_contents($file, $code)) {
-                    $error = error_get_last() ?: [ 'message' => 'unknown error'];
-                    $this->logger->error("File '$file is not writable: {$error['message']}");
-                    exit();
-                }
+            foreach ($namespace->getClasses() as $class) {
+                $file = $outputDir
+                    . ($relativeDir ? DIRECTORY_SEPARATOR . $relativeDir : '')
+                    . DIRECTORY_SEPARATOR . $class->getName() . '.php';
+                $this->writeClass($namespace, $class, $file);
             }
-            $this->logger->log(
-                $diff ? LogLevel::NOTICE : LogLevel::INFO,
-                ($diff ? '+' : ' ') . ' ' . $class->getName() . ': ' . $file
-            );
         }
     }
 
-    public function build(Schema $schema): PhpNamespace
+    /**
+     * @param PhpNamespace $ns
+     * @param ClassLike $class
+     * @param string $file
+     * @return void
+     * @throws GeneratorException
+     */
+    protected function writeClass(PhpNamespace $ns, ClassLike $class, string $file): void
     {
-        $ns = new PhpNamespace($schema->namespace);
+        $dir = dirname($file);
+        if (!file_exists($dir)) {
+            if (!@mkdir($dir, 0777, true)) {
+                $error = error_get_last();
+                throw new GeneratorException("Path '$dir' could not be created: {$error['message']}");
+            }
+        }
+
+        assert($class instanceof EnumType || $class instanceof ClassType);
+
+        $code = "<?php\n"
+            . "declare(strict_types=1);\n\n"
+            . "namespace {$ns->getName()};\n\n"
+            . $this->printer->printClass($class, $ns);
+
+        $oldCode = file_exists($file) ? file_get_contents($file) : '';
+        $diff = $oldCode != $code;
+        if ($diff) {
+            if (!@file_put_contents($file, $code)) {
+                $error = error_get_last() ?: [ 'message' => 'unknown error'];
+                throw new GeneratorException("File '$file is not writable: {$error['message']}");
+            }
+        }
+        $this->logger->log(
+            LogLevel::INFO,
+            "class {$ns->getName()}\\{$class->getName()}: "
+        );
+        $this->logger->log(
+            $diff ? LogLevel::NOTICE : LogLevel::INFO,
+            ($diff ? '+ ' : '- ') . $file
+        );
+    }
+
+    /**
+     * @param Schema $schema
+     * @return array|PhpNamespace[]
+     */
+    public function build(Schema $schema): array
+    {
+        $namespaces = [];
 
         foreach ($schema->enums as $enum) {
+            $nsName = $enum->getNamespace();
+            $ns = $namespaces[$nsName] ??= new PhpNamespace($nsName);
             $this->buildEnum($ns, $enum);
         }
 
-        foreach ($schema->dtos as $object) {
-            $this->buildClass($ns, $object);
+        foreach ($schema->dtos as $dto) {
+            $nsName = $dto->getNamespace();
+            $ns = $namespaces[$nsName] ??= new PhpNamespace($nsName);
+            $this->buildDto($ns, $dto);
         }
 
-        return $ns;
+        return $namespaces;
     }
 
     protected function buildEnum(PhpNamespace $ns, Enum $e): ClassType|EnumType
     {
-        $this->logger->debug(" Building enum '{$ns->getName()}\\$e->name'");
+        $this->logger->debug(" Building enum '$e->name'");
 
         if (static::$usePhpEnums) {
-            $enum = $ns->addEnum($e->name)
+            $enum = $ns->addEnum($e->getShortName())
                 ->setComment($this->buildComment($e))
                 ->setType($e->backedType);
             foreach ($e->cases as $value => $case) {
@@ -112,7 +155,7 @@ class DtoGenerator implements LoggerAwareInterface
             return $enum;
         }
 
-        $enum = $ns->addClass($e->name)
+        $enum = $ns->addClass($e->getShortName())
             ->setComment($this->buildComment($e))
             ->setFinal();
         $enum->addProperty('map')->setType('array')->setStatic();
@@ -193,11 +236,15 @@ class DtoGenerator implements LoggerAwareInterface
         return $enum;
     }
 
-    protected function buildClass(PhpNamespace $ns, DTO $object): ClassType
+    protected function buildDto(PhpNamespace $ns, Dto $object): ClassType
     {
-        $this->logger->debug(" Building class '{$ns->getName()}\\$object->name'");
+        $this->logger->debug(" Building class '$object->name'");
 
-        $class = $ns->addClass($object->name);
+        $hasDefaults = false;
+        $hasRequired = false;
+        $hasProcessors = false;
+
+        $class = $ns->addClass($object->getShortName());
 
         $class->addComment($this->buildComment($object));
 
@@ -207,32 +254,7 @@ class DtoGenerator implements LoggerAwareInterface
         $creator = $class->addMethod('create')
             ->setStatic()
             ->setPublic()
-            ->setReturnType('self')
-            ->addBody('// defaults')
-            ->addBody('$data += self::defaults();')
-            ->addBody('')
-            ->addBody('// check required')
-            ->addBody('if ($diff = array_diff(array_keys($data), self::required())) {')
-            ->addBody('    throw new \\InvalidArgumentException("missing keys: " . implode(", ", $diff));')
-            ->addBody('}')
-            ->addBody('')
-            ->addBody('// process')
-            ->addBody('foreach ($data as $key => &$value) {')
-            ->addBody('    foreach (self::processors($key) as $type => $processor) {')
-            ->addBody('        if ($value === null) break;')
-            ->addBody('        if ($type === "validator" && !call_user_func($processor, $value)) {')
-            ->addBody('            throw new \\InvalidArgumentException("invalid value at key: $key");')
-            ->addBody('        } else {')
-            ->addBody('            $value = call_user_func($processor, $value);')
-            ->addBody('        }')
-            ->addBody('    }')
-            ->addBody('}')
-            ->addBody('')
-            ->addBody('// create')
-            ->addBody('return new self(');
-
-        $creator->addParameter('data')
-            ->setType('array');
+            ->setReturnType('self');
 
         $defaultsArray = [];
         $defaultsMethod = $class->addMethod('defaults')
@@ -254,23 +276,40 @@ class DtoGenerator implements LoggerAwareInterface
         $processorsMethod->addParameter('key')
             ->setType('string');
 
-        foreach ($object->fields as $field) {
+        $fields = $object->fields;
+        if (static::$buildRequiredFieldsFirst) {
+            $fields = new ArrayObject($fields);
+            $fields->uasort(fn (Field $a, Field $b) => $b->required <=> $a->required);
+        }
+        foreach ($fields as $field) {
             $isNullable = !$field->required;
-            $phpType = ($isNullable ? '?' : '')
-                . ($field->type->sameNamespace ? '\\' . $ns->getName() : '')
-                . (!in_array($field->type->phpType, [ 'int', 'bool', 'string', 'float', 'array', 'mixed' ]) ? '\\' : '')
-                . $field->type->phpType;
-            if ($field->type->phpTypeHint) {
-                $phpTypeHint = ($isNullable ? '?' : '') . ($field->type->phpTypeHint);
-            } else {
-                $phpTypeHint = $phpType;
+            if ($field->type instanceof ListType) {
+                $isNullable = false;
+            }
+            $phpType = $field->type->buildTypeId($object->schema);
+            $phpTypeHint = $field->type->buildTypeHint($object->schema);
+            $buildVarDoc = ($phpTypeHint != $phpType);
+            $phpTypeHint = $ns->simplifyType($phpTypeHint);
+            if ($isNullable) {
+                $phpTypeHint = "?$phpTypeHint";
             }
 
             if ($field->default !== null) {
                 $defaultsArray[$field->name] = $field->default;
+                $hasDefaults = true;
             }
             if ($field->required) {
                 $requiredArray[] = $field->name;
+                $hasRequired = true;
+            }
+
+            $assigner = "\$$field->name";
+            if ($field->type instanceof ListType && static::$buildListTypeChecks) {
+                $assigner = sprintf(
+                    'array_map(fn(%s $_) => $_, %s)',
+                    $ns->simplifyName($field->type->elementType->buildTypeId($object->schema)),
+                    "$$field->name"
+                );
             }
 
             if (static::$usePromotedParameters) {
@@ -279,12 +318,17 @@ class DtoGenerator implements LoggerAwareInterface
                     ->setPublic()
                     ->setReadOnly();
 
-                if ($field->type->phpTypeHint) {
+                if ($buildVarDoc) {
                     $parameter->addComment("@var $phpTypeHint \$$field->name");
+                }
+
+                if ($field->type instanceof ListType) {
+                    $constructor->addBody("$assigner;");
                 }
             } else {
                 $parameter = $constructor->addParameter($field->name);
-                $constructor->addBody("\$this->$field->name = \$$field->name;");
+
+                $constructor->addBody("\$this->$field->name = $assigner;");
 
                 $property = $class->addProperty($field->name)
                     ->setProtected()
@@ -293,6 +337,8 @@ class DtoGenerator implements LoggerAwareInterface
 
                 if ($field->default !== null || $isNullable) {
                     $property->setValue($field->default);
+                } else if ($field->type instanceof ListType) {
+                    $property->setValue([]);
                 }
 
                 $getter = $class->addMethod('get' . ucfirst($field->name))
@@ -301,7 +347,7 @@ class DtoGenerator implements LoggerAwareInterface
                     ->setReturnType($phpType)
                     ->setBody("return \$this->$field->name;");
 
-                if ($field->type->phpTypeHint) {
+                if ($buildVarDoc) {
                     $property->addComment("@var $phpTypeHint");
                     $getter->addComment("@return $phpTypeHint");
                 }
@@ -313,40 +359,107 @@ class DtoGenerator implements LoggerAwareInterface
 
             if ($field->default !== null || $isNullable) {
                 $parameter->setDefaultValue($field->default);
+            } else if ($field->type instanceof ListType) {
+                $parameter->setDefaultValue([]);
             }
 
-            if ($field->filters || $field->validators || $field->type->importer) {
+            $importer = $field->type->buildImporter($object->schema);
+            if ($importer || $field->filters || $field->validators) {
+                $hasProcessors = true;
+
                 $processorsMethod->addBody('    case ?:', [ $field->name ]);
                 foreach ($field->filters as $filter) {
-                    $closure = new Closure($filter);
+                    $closure = new PrintableClosure($filter);
                     $processorsMethod->addBody("        yield 'filter' => $closure;");
                 }
-                if ($field->type->importer) {
-                    $closure = new Closure($field->type->importer);
+                if ($importer) {
+                    $closure = new PrintableClosure($importer);
                     $processorsMethod->addBody("        yield 'importer' => $closure;");
                 }
                 foreach ($field->validators as $validator) {
-                    $closure = new Closure($validator);
+                    $closure = new PrintableClosure($validator);
                     $processorsMethod->addBody("        yield 'validator' => $closure;");
                 }
                 $processorsMethod->addBody('        break;');
                 $processorsMethod->addBody('');
             }
-
-            $creator->addBody('    $data[?],', [ $field->name ]);
         }
 
-        $creator->addBody(');');
-        $processorsMethod->addBody('    default: return;');
+        $processorsMethod->addBody('    default:');
         $processorsMethod->addBody('}');
         $defaultsMethod->addBody('return ?;', [ $defaultsArray ]);
         $requiredMethod->addBody('return ?;', [ $requiredArray ]);
+
+
+        if (!$hasDefaults) {
+            $class->removeMethod('defaults');
+        }
+        if (!$hasRequired) {
+            $class->removeMethod('required');
+        }
+        if (!$hasProcessors) {
+            $class->removeMethod('processors');
+        }
+
+        $hasCreator = static::$buildCreateMethods;
+        if (!$hasCreator) {
+            $class->removeMethod('creator');
+        } else {
+            if ($hasDefaults) {
+                $creator
+                    ->addBody('// defaults')
+                    ->addBody('$data += self::defaults();')
+                    ->addBody('');
+            }
+
+            if ($hasRequired) {
+                $creator
+                    ->addBody('// check required')
+                    ->addBody('if ($diff = array_diff(array_keys($data), self::required())) {')
+                    ->addBody('    throw new \\InvalidArgumentException("missing keys: " . implode(", ", $diff));')
+                    ->addBody('}')
+                    ->addBody('');
+            }
+
+            if ($hasProcessors) {
+                $creator
+                    ->addBody('// process')
+                    ->addBody('foreach ($data as $key => &$value) {')
+                    ->addBody('    foreach (self::processors($key) as $type => $processor) if ($value !== null) {')
+                    ->addBody('        if ($type === "validator" && call_user_func($processor, $value) === false) {')
+                    ->addBody('            throw new \\InvalidArgumentException("invalid value at key: $key");')
+                    ->addBody('        } else {')
+                    ->addBody('            $value = call_user_func($processor, $value);')
+                    ->addBody('        }')
+                    ->addBody('    }')
+                    ->addBody('}')
+                    ->addBody('');
+            }
+
+            $creator->addBody('// create');
+            if (static::$useCreatorVariadic) {
+                $creator->addBody('return new self(...$data);');
+            } else {
+                $creator->addBody('return new self(');
+                foreach ($object->fields as $field) {
+                    $creator->addBody('    $data[?],', [ $field->name ]);
+                }
+                $creator->addBody(');');
+            }
+
+            $creator->addParameter('data')
+                ->setType('array');
+
+        }
 
         return $class;
     }
 
     protected function buildComment(AbstractObject $o): string
     {
+        if (!static::$buildFileComments) {
+            return '';
+        }
         $doc = "This class is auto-generated with klkvsk/dto-generator\n"
             . "Do not modify it, any changes might be overwritten!\n";
 

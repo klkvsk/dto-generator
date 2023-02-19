@@ -1,8 +1,9 @@
 <?php
+declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Schema;
 
-use Klkvsk\DtoGenerator\Schema\Type;
+use Klkvsk\DtoGenerator\Schema\Types\Type;
 
 class Field
 {

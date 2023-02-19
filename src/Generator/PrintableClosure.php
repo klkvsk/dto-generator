@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Generator;
 
@@ -8,17 +9,19 @@ use Nette\PhpGenerator\Literal;
 use Nette\Utils\Callback;
 use Opis\Closure\ReflectionClosure;
 
-class Closure
+class PrintableClosure
 {
-    protected $code;
+    protected string $code;
 
+    /** @throws \ReflectionException */
     public function __construct(\Closure $closure)
     {
         $inner = Callback::unwrap($closure);
         if (Callback::isStatic($inner)) {
-            $this->code = DtoGenerator::$useFirstClassCallableSyntax
+            $code = DtoGenerator::$useFirstClassCallableSyntax
                 ? new Literal(implode('::', (array) $inner) . '(...)')
                 : new Literal('\Closure::fromCallable(?)', [ $inner ]);
+            $this->code = (string)$code;
             return;
         }
         $reflector = new ReflectionClosure($closure);
@@ -27,9 +30,9 @@ class Closure
             if ($value instanceof \Closure) {
                 $dump = new Literal((string)new static($value));
             } else {
-                $dump = (new Dumper())->dump($value);
+                $dump = (new Dumper)->dump($value);
             }
-            $code = preg_replace('/\$' . $key . '(?=[^a-z_0-9])/', $dump, $code);
+            $code = preg_replace('/\$' . $key . '(?=[^a-z_0-9])/', (string)$dump, $code);
         }
         $this->code = trim($code);
     }

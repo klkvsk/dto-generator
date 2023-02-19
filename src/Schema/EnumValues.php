@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Schema;
 
@@ -37,8 +38,7 @@ enum EnumValues
                             $key
                         );
                         $key = preg_replace('/[^a-zA-Z0-9]/', '_', $key);
-                        $key = strtoupper($key);
-                        return $key;
+                        return strtoupper($key);
                     },
                     $array
                 )

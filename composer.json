@@ -8,7 +8,11 @@
     "autoload": {
         "psr-4": {
             "Klkvsk\\DtoGenerator\\": "src/"
-        }
+        },
+        "files": [
+            "src/Schema/functions.php",
+            "src/Schema/Types/functions.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

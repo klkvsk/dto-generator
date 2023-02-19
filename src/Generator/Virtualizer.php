@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Generator;
 
@@ -9,7 +10,7 @@ use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\PsrPrinter;
 
 /**
- * Virtualizer can register an in-place built scheme so autoloading will magically work.
+ * Virtualizer can register an in-place built scheme so auto-loading will magically work.
  * Classes will be virtual in a meaning that you can use them, but they do not exist in code.
  *
  * This is a helper class intended for testing.
@@ -20,7 +21,7 @@ use Nette\PhpGenerator\PsrPrinter;
  *  2) register a stream wrapper for `something://` that will return class code
  *
  * @example
- *
+ * ```
  * $ns = (new DtoGenerator)->build(
  *     new Schema(
  *         namespace: 'Test',
@@ -36,11 +37,11 @@ use Nette\PhpGenerator\PsrPrinter;
  * Virtualizer::register($ns);
  *
  * $foo = new \Test\Foo(1);
- *
+ * ```
  */
 final class Virtualizer
 {
-    public $context;
+    public mixed $context;
 
     protected string $code = '';
     protected int $pos = 0;
@@ -50,7 +51,10 @@ final class Virtualizer
      */
     protected static array $map = [];
 
-    public static function register(PhpNamespace $namespace)
+    /**
+     * @throws GeneratorException
+     */
+    public static function register(PhpNamespace $namespace): void
     {
         $key = md5($namespace->getName());
         if (in_array($key, stream_get_wrappers())) {
@@ -59,11 +63,12 @@ final class Virtualizer
 
         self::$map[$key] = $namespace;
 
-        stream_wrapper_register($key, static::class);
+        stream_wrapper_register($key, self::class);
         spl_autoload_register(fn ($className) => require ("$key://$className"));
     }
 
-    public function stream_open($path, $mode, $options, &$opened_path)
+    /** @throws GeneratorException */
+    public function stream_open($path, $mode, $options, &$opened_path): bool
     {
         [ $key, $className ] = explode('://', $path);
         if (!array_key_exists($key, self::$map)) {
@@ -86,7 +91,7 @@ final class Virtualizer
         return true;
     }
 
-    public function stream_close()
+    public function stream_close(): void
     {
         $this->code = '';
         $this->pos = 0;
@@ -96,24 +101,24 @@ final class Virtualizer
     {
     }
 
-    public function stream_read($count)
+    public function stream_read($count): string
     {
         $part = substr($this->code, $this->pos, $count);
         $this->pos += $count;
         return $part;
     }
 
-    function stream_tell()
+    function stream_tell(): int
     {
         return $this->pos;
     }
 
-    public function stream_eof()
+    public function stream_eof(): bool
     {
         return $this->pos >= strlen($this->code);
     }
 
-    public function stream_stat()
+    public function stream_stat(): array
     {
         return [];
     }

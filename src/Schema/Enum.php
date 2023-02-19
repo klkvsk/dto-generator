@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Schema;
 
@@ -23,7 +24,6 @@ class Enum extends AbstractObject
 
         $this->cases = $enumKeys->process($cases);
         $this->backedType = $backedType;
-
     }
 
 }
