@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Klkvsk\DtoGenerator\Schema;
 
 use Klkvsk\DtoGenerator\Exception\SchemaException;
-use Klkvsk\DtoGenerator\Helpers\Cloneable;
+use Spatie\Cloneable\Cloneable;
 
 abstract class AbstractObject
 {

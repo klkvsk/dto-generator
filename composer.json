@@ -33,7 +33,8 @@
         "opis/closure": "^3.6",
         "psr/log": "^3.0",
         "ulrichsg/getopt-php": "^4.0",
-        "splitbrain/php-cli": "^1.2"
+        "splitbrain/php-cli": "^1.2",
+        "spatie/php-cloneable": "^1.0.1"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.14",
