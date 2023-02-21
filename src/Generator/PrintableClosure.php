@@ -13,11 +13,11 @@ class PrintableClosure
     protected string $code;
 
     /** @throws \ReflectionException */
-    public function __construct(\Closure $closure, bool $useFristClassCallableSyntax = true)
+    public function __construct(\Closure $closure, bool $useFirstClassCallableSyntax = true)
     {
         $inner = Callback::unwrap($closure);
         if (Callback::isStatic($inner)) {
-            $code = $useFristClassCallableSyntax
+            $code = $useFirstClassCallableSyntax
                 ? new Literal(implode('::', (array) $inner) . '(...)')
                 : new Literal('\Closure::fromCallable(?)', [ $inner ]);
             $this->code = (string)$code;

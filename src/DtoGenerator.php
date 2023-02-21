@@ -108,7 +108,7 @@ class DtoGenerator implements LoggerAwareInterface
         $outputDir = $this->getOutputDir($schema);
         $this->logger->debug("Writing schema '$schema->namespace'");
         foreach ($namespaces as $namespace) {
-            $relativeNamespace = substr($namespace->getName(), strlen($schema->namespace) + 1);
+            $relativeNamespace = substr($namespace->getName(), strlen($schema->namespace));
             $relativeDir = null;
             if ($relativeNamespace) {
                 $relativeDir = str_replace('\\', DIRECTORY_SEPARATOR, $relativeNamespace);
