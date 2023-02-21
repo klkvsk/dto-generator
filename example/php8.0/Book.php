@@ -84,7 +84,7 @@ class Book implements \JsonSerializable
                 break;
 
             case "author":
-                yield 'importer' => fn (array $data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ]);
+                yield 'importer' => fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data);
                 break;
 
             case "released":
@@ -93,7 +93,7 @@ class Book implements \JsonSerializable
 
             case "genres":
                 yield 'importer' => fn ($array) => array_map(
-                    fn (array $data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Genre', 'from' ]),
+                    fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Genre', 'from' ], $data),
                     (array)$array
                 );
                 break;
@@ -138,7 +138,8 @@ class Book implements \JsonSerializable
         return $array;
     }
 
-    public function jsonSerialize(): array
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {

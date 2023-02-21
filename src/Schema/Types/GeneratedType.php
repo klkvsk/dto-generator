@@ -30,6 +30,6 @@ abstract class GeneratedType extends Type
     {
         $className = $this->buildTypeId($schema);
         $methodName = $this->getCreatorMethod();
-        return fn (array $data) => call_user_func([ $className, $methodName ]);
+        return fn ($data) => call_user_func([ $className, $methodName ], $data);
     }
 }

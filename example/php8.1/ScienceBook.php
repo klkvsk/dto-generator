@@ -36,14 +36,15 @@ class ScienceBook extends Book implements \JsonSerializable
         switch ($key) {
             case "references":
                 yield 'importer' => fn ($array) => array_map(
-                    fn (array $data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\ScienceBook', 'create' ]),
+                    fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\ScienceBook', 'create' ], $data),
                     (array)$array
                 );
                 break;
         }
         foreach (class_parents(self::class) as $parent) {
             if (method_exists($parent, 'processors')) {
-                return call_user_func([$parent, 'processors'], $key);
+                yield from call_user_func([$parent, 'processors'], $key);
+                break;
             }
         }
     }
@@ -78,7 +79,8 @@ class ScienceBook extends Book implements \JsonSerializable
         return $array;
     }
 
-    public function jsonSerialize(): array
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {

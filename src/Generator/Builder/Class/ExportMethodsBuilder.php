@@ -45,7 +45,7 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
                 ->addBody('    $array[$var] = $value;')
                 ->addBody('}')
                 ->addBody('return $array;')
-                ->setReturnType('array');
+                ->addAttribute('ReturnTypeWillChange');
         }
     }
 }

@@ -91,6 +91,7 @@ final class Genre implements \JsonSerializable
         return self::from('scientific-work');
     }
 
+    #[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return $this->value;

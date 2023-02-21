@@ -97,7 +97,8 @@ class Author implements \JsonSerializable
         return $array;
     }
 
-    public function jsonSerialize(): array
+    #[\ReturnTypeWillChange]
+    public function jsonSerialize()
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
