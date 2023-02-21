@@ -12,7 +12,7 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
  */
-final class Genre
+final class Genre implements \JsonSerializable
 {
     public static array $map;
     public string $name;
@@ -89,5 +89,10 @@ final class Genre
     public static function SCIENTIFIC_WORK(): self
     {
         return self::from('scientific-work');
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->value;
     }
 }

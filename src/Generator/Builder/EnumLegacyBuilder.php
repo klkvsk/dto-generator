@@ -89,6 +89,10 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             $casesMap,
         ]);
 
+        $class->addImplement('\\JsonSerializable');
+        $class->addMethod('jsonSerialize')
+            ->addBody('return $this->value;');
+
         return $class;
     }
 

@@ -10,6 +10,7 @@ use Klkvsk\DtoGenerator\Exception\GeneratorException;
 use Klkvsk\DtoGenerator\Exception\SchemaException;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\CreateMethodBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\DefaultsMethodBuilder;
+use Klkvsk\DtoGenerator\Generator\Builder\Class\ExportMethodsBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\ProcessorsMethodBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\PropertiesBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\RequiredMethodBuilder;
@@ -49,6 +50,9 @@ class DtoGenerator implements LoggerAwareInterface
     public static bool $withCreateMethods = true;
     public static bool $withPublicDefaultMethods = false;
     public static bool $withPublicRequiredMethods = false;
+
+    public static bool $withJsonSerialize = true;
+    public static bool $withToArray = true;
 
     protected readonly ClassBuilderInterface $classBuilder;
     protected readonly EnumBuilderInterface $enumBuilder;
@@ -94,6 +98,11 @@ class DtoGenerator implements LoggerAwareInterface
                     new CreateMethodBuilder(withCreatorVariadic: self::$useCreatorVariadic)
                 );
         }
+
+        $this->classBuilder
+            ->addMembersBuilder(
+                new ExportMethodsBuilder(toArray: self::$withToArray, jsonSerialize: self::$withJsonSerialize)
+            );
 
         $this->enumBuilder = self::$usePhpEnums ? new EnumNativeBuilder() : new EnumLegacyBuilder();
     }

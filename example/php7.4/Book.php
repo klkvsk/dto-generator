@@ -12,7 +12,7 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
  */
-class Book
+class Book implements \JsonSerializable
 {
     protected int $id;
     protected string $title;
@@ -142,5 +142,31 @@ class Book
             $data['rating'],
             $data['genres'],
         );
+    }
+
+    public function toArray(): array
+    {
+        $array = [];
+        foreach (get_mangled_object_vars($this) as $var => $value) {
+            $var = preg_replace("/.+\0/", "", $var);
+            if (is_object($value) && method_exists($value, "toArray")) {
+                $value = call_user_func([$value, "toArray"]);
+            }
+            $array[$var] = $value;
+        }
+        return $array;
+    }
+
+    public function jsonSerialize(): array
+    {
+        $array = [];
+        foreach (get_mangled_object_vars($this) as $var => $value) {
+            $var = preg_replace("/.+\0/", "", $var);
+            if (is_object($value) && $value instanceof \JsonSerializable) {
+                $value = $value->jsonSerialize();
+            }
+            $array[$var] = $value;
+        }
+        return $array;
     }
 }
