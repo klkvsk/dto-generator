@@ -3,21 +3,26 @@
 use Klkvsk\DtoGenerator\Schema as dto;
 use Klkvsk\DtoGenerator\Schema\Types as t;
 
+$outputDir = getenv('OUTPUT_DIR') ?: null;
+if ($outputDir) {
+    $outputDir = __DIR__ . DIRECTORY_SEPARATOR . $outputDir;
+}
+
 return dto\schema(
     namespace: 'Klkvsk\\DtoGenerator\\Example\\One',
+    outputDir: $outputDir,
     objects: [
-        $genre = dto\enum(
+        dto\enum(
             name: 'Genre',
             cases: [
                 'romance',
                 'comedy',
                 'drama',
                 'non-fiction',
-            ],
-            enumKeys: dto\EnumValues::CONST,
-            backedType: 'string'
+                'scientific-work'
+            ]
         ),
-        $author = dto\object(
+        dto\object(
             name: 'Author',
             fields: [
                 dto\field('id', t\int(), required: true),
@@ -30,26 +35,22 @@ return dto\schema(
                 ),
             ]
         ),
-        $book = dto\object(
+        dto\object(
             name: 'Book',
             fields: [
                 dto\field('id', t\int(), required: true),
                 dto\field('title', t\string(), required: true),
                 dto\field('released', t\date()),
-                dto\field('genre', t\enum($genre)),
-                dto\field('genres', t\list_(t\enum($genre))),
                 dto\field('author', t\object('Author'), required: true),
-                dto\field('references', t\list_(t\object('Book'))),
                 dto\field('rating', t\int(), default: 5),
-                dto\field('subDto', t\object('Foo\\SubDto')),
+                dto\field('genres', t\list_(t\enum('Genre'))),
             ]
         ),
-
         dto\object(
-            name: 'Foo\SubDto',
+            name: 'ScienceBook',
+            extends: 'Book',
             fields: [
-                dto\field('id', t\int(), required: true),
-                dto\field('author', t\object('Author'), required: true),
+                dto\field('references', t\list_(t\object('ScienceBook'))),
             ]
         ),
     ],

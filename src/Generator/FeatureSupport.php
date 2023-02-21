@@ -22,9 +22,10 @@ class FeatureSupport
             DtoGenerator::$usePhpEnums = true;
             DtoGenerator::$useMixedType = true;
             DtoGenerator::$useCreatorVariadic = true;
+            DtoGenerator::$usePromotedParameters = true;
         };
         yield '8.1' => function () {
-            DtoGenerator::$usePromotedParameters = true;
+            DtoGenerator::$useReadonlyProperties = true;
             DtoGenerator::$useFirstClassCallableSyntax = true;
         };
     }

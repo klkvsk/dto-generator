@@ -18,17 +18,15 @@ abstract class AbstractObject
     public function __construct(public readonly string $name)
     {
         $traces = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5);
-        $originalConstructorTrace = null;
-        while (! empty($traces)) {
-            $trace = array_shift($traces);
-            if (isset($trace['class']) && is_a($trace['class'], self::class, true)) {
-                $originalConstructorTrace = $trace;
-            } else {
+        $firstExternalTrace = null;
+        foreach ($traces as $trace) {
+            if (isset($trace['file']) && strpos($trace['file'], '/dto-generator/src/') === false) {
+                $firstExternalTrace = $trace;
                 break;
             }
         }
-        $this->declaredInFile = $originalConstructorTrace['file'] ?? null;
-        $this->declaredAtLine = $originalConstructorTrace['line'] ?? null;
+        $this->declaredInFile = $firstExternalTrace['file'] ?? null;
+        $this->declaredAtLine = $firstExternalTrace['line'] ?? null;
         $this->schema = null;
     }
 

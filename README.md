@@ -156,6 +156,10 @@ Closure of type `importer` is predefined for all types except `t\object`:
 dto\field('file', t\external(SplFileInfo::class, fn ($x) => new SplFileInfo($x))
 ```
 
+## Example
+
+See [/example/](./example) dir for the example schema and generated classes
+for different PHP versions.
 
 ## License
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+The MIT License (MIT). Please see [License File](./LICENSE) for more information.

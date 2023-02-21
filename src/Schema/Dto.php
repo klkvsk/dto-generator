@@ -33,7 +33,7 @@ class Dto extends AbstractObject
 
     public function field(Field $field): static
     {
-        $this->fields->offsetSet($field->name, $field);
+        $this->fields->offsetSet($field->name, $field->withObject($this));
         return $this;
     }
 
@@ -41,4 +41,18 @@ class Dto extends AbstractObject
     {
         return $this->fields->offsetGet($fieldName);
     }
+
+    public function withSchema(Schema $schema): static
+    {
+        $clone = parent::withSchema($schema);
+        assert($clone instanceof Dto);
+        $clone = $clone->with(fields: new \ArrayObject());
+        foreach ($this->fields as $field) {
+            $clone->field($field);
+        }
+
+        return $clone;
+    }
+
+
 }

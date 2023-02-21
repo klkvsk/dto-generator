@@ -1,0 +1,127 @@
+<?php
+declare(strict_types=1);
+
+namespace Klkvsk\DtoGenerator\Example\One;
+
+/**
+ * This class is auto-generated with klkvsk/dto-generator
+ * Do not modify it, any changes might be overwritten!
+ *
+ * @see project://example/dto.schema.php (line 38)
+ *
+ * @link https://github.com/klkvsk/dto-generator
+ * @link https://packagist.org/klkvsk/dto-generator
+ */
+class Book
+{
+    /**
+     * @param list<Genre> $genres
+     */
+    public function __construct(
+        protected int $id,
+        protected string $title,
+        protected Author $author,
+        protected ?\DateTimeInterface $released = null,
+        protected ?int $rating = 5,
+        protected array $genres = [],
+    ) {
+        (function(Genre ...$_) {})( ...$genres);
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function getAuthor(): Author
+    {
+        return $this->author;
+    }
+
+    public function getReleased(): ?\DateTimeInterface
+    {
+        return $this->released;
+    }
+
+    public function getRating(): ?int
+    {
+        return $this->rating;
+    }
+
+    /**
+     * @return list<Genre>
+     */
+    public function getGenres(): array
+    {
+        return $this->genres;
+    }
+
+    protected static function defaults(): array
+    {
+        return ['rating' => 5];
+    }
+
+    protected static function required(): array
+    {
+        return ['id', 'title', 'author'];
+    }
+
+    protected static function processors(string $key): \Generator
+    {
+        switch ($key) {
+            case "id":
+            case "rating":
+                yield 'importer' => \Closure::fromCallable('intval');
+                break;
+
+            case "title":
+                yield 'importer' => \Closure::fromCallable('strval');
+                break;
+
+            case "author":
+                yield 'importer' => fn (array $data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ]);
+                break;
+
+            case "released":
+                yield 'importer' => static fn ($d) => new \DateTimeImmutable($d, null);
+                break;
+
+            case "genres":
+                yield 'importer' => fn ($array) => array_map(
+                    fn (array $data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Genre', 'from' ]),
+                    (array)$array
+                );
+                break;
+        }
+    }
+
+    public static function create(array $data): self
+    {
+        // defaults
+        $data += self::defaults();
+
+        // check required
+        if ($diff = array_diff(array_keys($data), self::required())) {
+            throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
+        }
+
+        // process
+        foreach ($data as $key => &$value) {
+            foreach (self::processors($key) as $type => $processor) if ($value !== null) {
+                if ($type === "validator" && call_user_func($processor, $value) === false) {
+                    throw new \InvalidArgumentException("invalid value at key: $key");
+                } else {
+                    $value = call_user_func($processor, $value);
+                }
+            }
+        }
+
+        // create
+        return new self(...$data);
+    }
+}

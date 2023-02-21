@@ -3,10 +3,16 @@ declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Schema;
 
+use Klkvsk\DtoGenerator\Schema\Types\ListType;
 use Klkvsk\DtoGenerator\Schema\Types\Type;
+use Spatie\Cloneable\Cloneable;
 
 class Field
 {
+    use Cloneable;
+
+    public readonly ?Dto $object;
+
     public function __construct(
         public readonly string $name,
         public readonly Type   $type,
@@ -18,5 +24,16 @@ class Field
         /** @var \Closure[] */
         public readonly array  $validators = [],
     ) {
+        $this->object = null;
+    }
+
+    public function isNullable(): bool
+    {
+        return ! ($this->required || $this->type instanceof ListType);
+    }
+
+    public function withObject(Dto $object): static
+    {
+        return $this->with(object: $object);
     }
 }

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Generator;
 
-use Klkvsk\DtoGenerator\DtoGenerator;
 use Nette\PhpGenerator\Dumper;
 use Nette\PhpGenerator\Literal;
 use Nette\Utils\Callback;
@@ -14,11 +13,11 @@ class PrintableClosure
     protected string $code;
 
     /** @throws \ReflectionException */
-    public function __construct(\Closure $closure)
+    public function __construct(\Closure $closure, bool $useFristClassCallableSyntax = true)
     {
         $inner = Callback::unwrap($closure);
         if (Callback::isStatic($inner)) {
-            $code = DtoGenerator::$useFirstClassCallableSyntax
+            $code = $useFristClassCallableSyntax
                 ? new Literal(implode('::', (array) $inner) . '(...)')
                 : new Literal('\Closure::fromCallable(?)', [ $inner ]);
             $this->code = (string)$code;
