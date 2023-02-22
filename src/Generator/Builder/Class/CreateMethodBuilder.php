@@ -24,6 +24,7 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
         $creator
             ->setStatic()
             ->setPublic()
+            ->setComment('@return static')
             ->setReturnType('self');
 
         $creator->addParameter('data')
@@ -32,14 +33,14 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
         if ($class->hasMethod(DefaultsMethodBuilder::METHOD_NAME)) {
             $creator
                 ->addBody('// defaults')
-                ->addBody('$data += self::?();', [DefaultsMethodBuilder::METHOD_NAME])
+                ->addBody('$data += static::?();', [DefaultsMethodBuilder::METHOD_NAME])
                 ->addBody('');
         }
 
         if ($class->hasMethod(RequiredMethodBuilder::METHOD_NAME)) {
             $creator
                 ->addBody('// check required')
-                ->addBody('if ($diff = array_diff(array_keys($data), self::?())) {', [RequiredMethodBuilder::METHOD_NAME])
+                ->addBody('if ($diff = array_diff(array_keys($data), static::?())) {', [RequiredMethodBuilder::METHOD_NAME])
                 ->addBody('    throw new \\InvalidArgumentException("missing keys: " . implode(", ", $diff));')
                 ->addBody('}')
                 ->addBody('');
@@ -49,7 +50,7 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
             $creator
                 ->addBody('// process')
                 ->addBody('foreach ($data as $key => &$value) {')
-                ->addBody('    foreach (self::?($key) as $type => $processor) if ($value !== null) {', [ProcessorsMethodBuilder::METHOD_NAME])
+                ->addBody('    foreach (static::?($key) as $type => $processor) if ($value !== null) {', [ProcessorsMethodBuilder::METHOD_NAME])
                 ->addBody('        if ($type === "validator" && call_user_func($processor, $value) === false) {')
                 ->addBody('            throw new \\InvalidArgumentException("invalid value at key: $key");')
                 ->addBody('        } else {')
@@ -62,9 +63,9 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
 
         $creator->addBody('// create');
         if ($this->withCreatorVariadic) {
-            $creator->addBody('return new self(...$data);');
+            $creator->addBody('return new static(...$data);');
         } else {
-            $creator->addBody('return new self(');
+            $creator->addBody('return new static(');
             $constructor = $class->getMethod('__construct');
             foreach ($constructor->getParameters() as $constructorParameter) {
                 $creator->addBody('    $data[?],', [$constructorParameter->getName()]);

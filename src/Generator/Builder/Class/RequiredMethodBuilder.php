@@ -26,7 +26,7 @@ class RequiredMethodBuilder implements ClassMembersBuilderInterface
             }
         }
 
-        if (empty($requiredArray)) {
+        if (empty($requiredArray) && !$object->extends) {
             return;
         }
 
@@ -36,15 +36,12 @@ class RequiredMethodBuilder implements ClassMembersBuilderInterface
             ->setReturnType('array');
 
         if ($object->extends) {
-            $method->addBody('$required = ?;', [ $requiredArray ]);
-            $method->addBody('foreach (class_parents($this) as $parent) {');
-            $method->addBody('    if (method_exists($parent, ?)) {', [ self::METHOD_NAME ]);
-            $method->addBody('        return array_merge(call_user_func([$parent, ?]), $required);', [ self::METHOD_NAME ]);
-            $method->addBody('    }');
-            $method->addBody('}');
-            $method->addBody('return $required;');
+            $method->addBody('return array_merge(');
+            $method->addBody('    method_exists(parent::class, "' . self::METHOD_NAME . '") ? parent::' . self::METHOD_NAME . '() : [],');
+            $method->addBody('    ?', [$requiredArray]);
+            $method->addBody(');');
         } else {
-            $method->addBody('return ?;', [ $requiredArray ]);
+            $method->addBody('return ?;', [$requiredArray]);
         }
     }
 }

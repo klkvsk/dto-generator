@@ -66,16 +66,19 @@ class Author implements \JsonSerializable
         }
     }
 
+    /**
+     * @return static
+     */
     public static function create(array $data): self
     {
         // check required
-        if ($diff = array_diff(array_keys($data), self::required())) {
+        if ($diff = array_diff(array_keys($data), static::required())) {
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 
         // process
         foreach ($data as $key => &$value) {
-            foreach (self::processors($key) as $type => $processor) if ($value !== null) {
+            foreach (static::processors($key) as $type => $processor) if ($value !== null) {
                 if ($type === "validator" && call_user_func($processor, $value) === false) {
                     throw new \InvalidArgumentException("invalid value at key: $key");
                 } else {
@@ -85,7 +88,7 @@ class Author implements \JsonSerializable
         }
 
         // create
-        return new self(
+        return new static(
             $data['id'],
             $data['firstName'],
             $data['lastName'],

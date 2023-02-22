@@ -26,7 +26,7 @@ class DefaultsMethodBuilder implements ClassMembersBuilderInterface
             }
         }
 
-        if (empty($defaultsArray)) {
+        if (empty($defaultsArray) && ! $object->extends) {
             return;
         }
 
@@ -36,13 +36,10 @@ class DefaultsMethodBuilder implements ClassMembersBuilderInterface
             ->setReturnType('array');
 
         if ($object->extends) {
-            $method->addBody('$defaults = ?;', [ $defaultsArray ]);
-            $method->addBody('foreach (class_parents($this) as $parent) {');
-            $method->addBody('    if (method_exists($parent, ?)) {', [ self::METHOD_NAME ]);
-            $method->addBody('        return array_merge(call_user_func([$parent, ?]), $defaults);', [ self::METHOD_NAME ]);
-            $method->addBody('    }');
-            $method->addBody('}');
-            $method->addBody('return $defaults;');
+            $method->addBody('return array_merge(');
+            $method->addBody('    method_exists(parent::class, "' . self::METHOD_NAME . '") ? parent::' . self::METHOD_NAME . '() : [],');
+            $method->addBody('    ?', [ $defaultsArray ]);
+            $method->addBody(');');
         } else {
             $method->addBody('return ?;', [ $defaultsArray ]);
         }

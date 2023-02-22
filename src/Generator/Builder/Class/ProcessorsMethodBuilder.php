@@ -68,11 +68,8 @@ class ProcessorsMethodBuilder implements ClassMembersBuilderInterface
 
         if ($object->extends) {
             $parentMethodName = self::METHOD_NAME;
-            $body .= "foreach (class_parents(self::class) as \$parent) {\n";
-            $body .= "  if (method_exists(\$parent, '$parentMethodName')) {\n";
-            $body .= "    yield from call_user_func([\$parent, '$parentMethodName'], \$key);\n";
-            $body .= "    break;\n";
-            $body .= "  }\n";
+            $body .= "if (method_exists(parent::class, '$parentMethodName')) {\n";
+            $body .= "    yield from parent::$parentMethodName(\$key);\n";
             $body .= "}\n";
         }
 

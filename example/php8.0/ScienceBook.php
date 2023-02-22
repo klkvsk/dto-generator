@@ -39,6 +39,22 @@ class ScienceBook extends Book implements \JsonSerializable
         return $this->references;
     }
 
+    protected static function defaults(): array
+    {
+        return array_merge(
+            method_exists(parent::class, "defaults") ? parent::defaults() : [],
+            []
+        );
+    }
+
+    protected static function required(): array
+    {
+        return array_merge(
+            method_exists(parent::class, "required") ? parent::required() : [],
+            []
+        );
+    }
+
     protected static function processors(string $key): \Generator
     {
         switch ($key) {
@@ -49,19 +65,27 @@ class ScienceBook extends Book implements \JsonSerializable
                 );
                 break;
         }
-        foreach (class_parents(self::class) as $parent) {
-            if (method_exists($parent, 'processors')) {
-                yield from call_user_func([$parent, 'processors'], $key);
-                break;
-            }
+        if (method_exists(parent::class, 'processors')) {
+            yield from parent::processors($key);
         }
     }
 
+    /**
+     * @return static
+     */
     public static function create(array $data): self
     {
+        // defaults
+        $data += static::defaults();
+
+        // check required
+        if ($diff = array_diff(array_keys($data), static::required())) {
+            throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
+        }
+
         // process
         foreach ($data as $key => &$value) {
-            foreach (self::processors($key) as $type => $processor) if ($value !== null) {
+            foreach (static::processors($key) as $type => $processor) if ($value !== null) {
                 if ($type === "validator" && call_user_func($processor, $value) === false) {
                     throw new \InvalidArgumentException("invalid value at key: $key");
                 } else {
@@ -71,7 +95,7 @@ class ScienceBook extends Book implements \JsonSerializable
         }
 
         // create
-        return new self(...$data);
+        return new static(...$data);
     }
 
     public function toArray(): array
