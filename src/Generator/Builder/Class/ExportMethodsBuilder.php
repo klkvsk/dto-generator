@@ -8,9 +8,12 @@ use Nette\PhpGenerator\PhpNamespace;
 
 class ExportMethodsBuilder implements ClassMembersBuilderInterface
 {
+    const TO_ARRAY_METHOD_NAME = 'toArray';
+
     public function __construct(
-        protected bool $toArray = true,
-        protected bool $jsonSerialize = true,
+        protected bool    $toArray = true,
+        protected bool    $jsonSerialize = true,
+        protected ?string $dateFormat = null,
     )
     {
     }
@@ -18,13 +21,22 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
     public function build(Dto $object, PhpNamespace $ns, ClassType $class): void
     {
         if ($this->toArray) {
-            $class->addMethod('toArray')
+            $toArrayMethod = $class->addMethod('toArray')
                 ->setPublic()
                 ->addBody('$array = [];')
                 ->addBody('foreach (get_mangled_object_vars($this) as $var => $value) {')
-                ->addBody('    $var = preg_replace("/.+\0/", "", $var);')
-                ->addBody('    if (is_object($value) && method_exists($value, "toArray")) {')
-                ->addBody('        $value = call_user_func([$value, "toArray"]);')
+                ->addBody('    $var = preg_replace("/.+\0/", "", $var);');
+
+            if ($this->dateFormat) {
+                $toArrayMethod
+                    ->addBody('    if ($value instanceof \\DateTimeInterface) {')
+                    ->addBody('        $value = $value->format(?);', [$this->dateFormat])
+                    ->addBody('    }');
+            }
+
+            $toArrayMethod
+                ->addBody('    if (is_object($value) && method_exists($value, ?)) {', [self::TO_ARRAY_METHOD_NAME])
+                ->addBody('        $value = $value->?();', [self::TO_ARRAY_METHOD_NAME])
                 ->addBody('    }')
                 ->addBody('    $array[$var] = $value;')
                 ->addBody('}')
@@ -34,12 +46,21 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
 
         if ($this->jsonSerialize) {
             $class->addImplement('\\JsonSerializable');
-            $class->addMethod('jsonSerialize')
+            $jsonSerializeMethod = $class->addMethod('jsonSerialize')
                 ->setPublic()
                 ->addBody('$array = [];')
                 ->addBody('foreach (get_mangled_object_vars($this) as $var => $value) {')
-                ->addBody('    $var = preg_replace("/.+\0/", "", $var);')
-                ->addBody('    if (is_object($value) && $value instanceof \\JsonSerializable) {')
+                ->addBody('    $var = preg_replace("/.+\0/", "", $var);');
+
+            if ($this->dateFormat) {
+                $jsonSerializeMethod
+                    ->addBody('    if ($value instanceof \\DateTimeInterface) {')
+                    ->addBody('        $value = $value->format(?);', [$this->dateFormat])
+                    ->addBody('    }');
+            }
+
+            $jsonSerializeMethod
+                ->addBody('    if ($value instanceof \\JsonSerializable) {')
                 ->addBody('        $value = $value->jsonSerialize();')
                 ->addBody('    }')
                 ->addBody('    $array[$var] = $value;')

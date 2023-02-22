@@ -101,7 +101,11 @@ class DtoGenerator implements LoggerAwareInterface
 
         $this->classBuilder
             ->addMembersBuilder(
-                new ExportMethodsBuilder(toArray: self::$withToArray, jsonSerialize: self::$withJsonSerialize)
+                new ExportMethodsBuilder(
+                    toArray: self::$withToArray,
+                    jsonSerialize: self::$withJsonSerialize,
+                    dateFormat: \DateTimeInterface::ATOM
+                )
             );
 
         $this->enumBuilder = self::$usePhpEnums ? new EnumNativeBuilder() : new EnumLegacyBuilder();

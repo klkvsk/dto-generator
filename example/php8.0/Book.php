@@ -133,8 +133,11 @@ class Book implements \JsonSerializable
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
             $var = preg_replace("/.+\0/", "", $var);
-            if (is_object($value) && method_exists($value, "toArray")) {
-                $value = call_user_func([$value, "toArray"]);
+            if ($value instanceof \DateTimeInterface) {
+                $value = $value->format('Y-m-d\TH:i:sP');
+            }
+            if (is_object($value) && method_exists($value, 'toArray')) {
+                $value = $value->toArray();
             }
             $array[$var] = $value;
         }
@@ -147,7 +150,10 @@ class Book implements \JsonSerializable
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
             $var = preg_replace("/.+\0/", "", $var);
-            if (is_object($value) && $value instanceof \JsonSerializable) {
+            if ($value instanceof \DateTimeInterface) {
+                $value = $value->format('Y-m-d\TH:i:sP');
+            }
+            if ($value instanceof \JsonSerializable) {
                 $value = $value->jsonSerialize();
             }
             $array[$var] = $value;
