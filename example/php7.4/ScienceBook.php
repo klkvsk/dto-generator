@@ -21,12 +21,12 @@ class ScienceBook extends Book implements \JsonSerializable
         int $id,
         string $title,
         Author $author,
-        ?\DateTimeInterface $released = null,
-        ?int $rating = 5,
         array $genres = [],
         array $references = [],
+        ?\DateTimeInterface $released = null,
+        ?int $rating = 5
     ) {
-        parent::__construct($id, $title, $author, $released, $rating, $genres);
+        parent::__construct($id, $title, $author, $genres, $released, $rating);
         (function(ScienceBook ...$_) {})( ...$references);
         $this->references = $references;
     }
@@ -83,8 +83,9 @@ class ScienceBook extends Book implements \JsonSerializable
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 
-        // process
-        foreach ($data as $key => &$value) {
+        // import
+        $constructorParams = [];
+        foreach ($data as $key => $value) {
             foreach (static::processors($key) as $type => $processor) if ($value !== null) {
                 if ($type === "validator" && call_user_func($processor, $value) === false) {
                     throw new \InvalidArgumentException("invalid value at key: $key");
@@ -92,17 +93,20 @@ class ScienceBook extends Book implements \JsonSerializable
                     $value = call_user_func($processor, $value);
                 }
             }
+            if (property_exists(static::class, $key)) {
+                $constructorParams[$key] = $value;
+            }
         }
 
         // create
         return new static(
-            $data['id'],
-            $data['title'],
-            $data['author'],
-            $data['released'],
-            $data['rating'],
-            $data['genres'],
-            $data['references'],
+            $constructorParams["id"],
+            $constructorParams["title"],
+            $constructorParams["author"],
+            $constructorParams["genres"],
+            $constructorParams["references"],
+            $constructorParams["released"],
+            $constructorParams["rating"]
         );
     }
 

@@ -17,7 +17,7 @@ class Author implements \JsonSerializable
     public function __construct(
         public readonly int $id,
         public readonly string $firstName,
-        public readonly ?string $lastName = null,
+        public readonly ?string $lastName = null
     ) {
     }
 
@@ -57,8 +57,9 @@ class Author implements \JsonSerializable
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 
-        // process
-        foreach ($data as $key => &$value) {
+        // import
+        $constructorParams = [];
+        foreach ($data as $key => $value) {
             foreach (static::processors($key) as $type => $processor) if ($value !== null) {
                 if ($type === "validator" && call_user_func($processor, $value) === false) {
                     throw new \InvalidArgumentException("invalid value at key: $key");
@@ -66,10 +67,13 @@ class Author implements \JsonSerializable
                     $value = call_user_func($processor, $value);
                 }
             }
+            if (property_exists(static::class, $key)) {
+                $constructorParams[$key] = $value;
+            }
         }
 
         // create
-        return new static(...$data);
+        return new static(...$constructorParams);
     }
 
     public function toArray(): array

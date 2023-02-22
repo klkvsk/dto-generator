@@ -13,12 +13,6 @@ class ClassBuilder implements ClassBuilderInterface
     /** @var ClassMembersBuilderInterface[] */
     protected array $membersBuilders = [];
 
-    public function __construct(
-        protected bool $putRequiredFieldsFirst = true,
-    )
-    {
-    }
-
     public function addMembersBuilder(ClassMembersBuilderInterface $membersBuilder): static
     {
         $this->membersBuilders[] = $membersBuilder;
@@ -39,10 +33,6 @@ class ClassBuilder implements ClassBuilderInterface
             $parentObject = $object->schema->findObject($object->extends);
             $extends = $parentObject ? $parentObject->name : $object->extends;
             $class->setExtends($extends);
-        }
-
-        if ($this->putRequiredFieldsFirst) {
-            $object->fields->uasort(fn(Field $a, Field $b) => $b->required <=> $a->required);
         }
 
         foreach ($this->membersBuilders as $membersBuilder) {

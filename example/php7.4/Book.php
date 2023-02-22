@@ -16,8 +16,8 @@ class Book implements \JsonSerializable
 {
     protected int $id;
     protected string $title;
-    protected Author $author;
     protected ?\DateTimeInterface $released;
+    protected Author $author;
     protected ?int $rating;
 
     /** @var list<Genre> $genres */
@@ -27,14 +27,14 @@ class Book implements \JsonSerializable
         int $id,
         string $title,
         Author $author,
-        ?\DateTimeInterface $released = null,
-        ?int $rating = 5,
         array $genres = [],
+        ?\DateTimeInterface $released = null,
+        ?int $rating = 5
     ) {
         $this->id = $id;
         $this->title = $title;
-        $this->author = $author;
         $this->released = $released;
+        $this->author = $author;
         $this->rating = $rating;
         (function(Genre ...$_) {})( ...$genres);
         $this->genres = $genres;
@@ -50,14 +50,14 @@ class Book implements \JsonSerializable
         return $this->title;
     }
 
-    public function getAuthor(): Author
-    {
-        return $this->author;
-    }
-
     public function getReleased(): ?\DateTimeInterface
     {
         return $this->released;
+    }
+
+    public function getAuthor(): Author
+    {
+        return $this->author;
     }
 
     public function getRating(): ?int
@@ -95,12 +95,12 @@ class Book implements \JsonSerializable
                 yield 'importer' => \Closure::fromCallable('strval');
                 break;
 
-            case "author":
-                yield 'importer' => fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data);
-                break;
-
             case "released":
                 yield 'importer' => static fn ($d) => new \DateTimeImmutable($d, null);
+                break;
+
+            case "author":
+                yield 'importer' => fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data);
                 break;
 
             case "genres":
@@ -125,8 +125,9 @@ class Book implements \JsonSerializable
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 
-        // process
-        foreach ($data as $key => &$value) {
+        // import
+        $constructorParams = [];
+        foreach ($data as $key => $value) {
             foreach (static::processors($key) as $type => $processor) if ($value !== null) {
                 if ($type === "validator" && call_user_func($processor, $value) === false) {
                     throw new \InvalidArgumentException("invalid value at key: $key");
@@ -134,16 +135,19 @@ class Book implements \JsonSerializable
                     $value = call_user_func($processor, $value);
                 }
             }
+            if (property_exists(static::class, $key)) {
+                $constructorParams[$key] = $value;
+            }
         }
 
         // create
         return new static(
-            $data['id'],
-            $data['title'],
-            $data['author'],
-            $data['released'],
-            $data['rating'],
-            $data['genres'],
+            $constructorParams["id"],
+            $constructorParams["title"],
+            $constructorParams["author"],
+            $constructorParams["genres"],
+            $constructorParams["released"],
+            $constructorParams["rating"]
         );
     }
 

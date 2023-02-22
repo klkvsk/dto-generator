@@ -21,9 +21,9 @@ class Book implements \JsonSerializable
         public readonly int $id,
         public readonly string $title,
         public readonly Author $author,
-        public readonly ?\DateTimeInterface $released = null,
-        public readonly ?int $rating = 5,
         public readonly array $genres = [],
+        public readonly ?\DateTimeInterface $released = null,
+        public readonly ?int $rating = 5
     ) {
         (function(Genre ...$_) {})( ...$genres);
     }
@@ -50,12 +50,12 @@ class Book implements \JsonSerializable
                 yield 'importer' => strval(...);
                 break;
 
-            case "author":
-                yield 'importer' => fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data);
-                break;
-
             case "released":
                 yield 'importer' => static fn ($d) => new \DateTimeImmutable($d, null);
+                break;
+
+            case "author":
+                yield 'importer' => fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data);
                 break;
 
             case "genres":
@@ -80,8 +80,9 @@ class Book implements \JsonSerializable
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 
-        // process
-        foreach ($data as $key => &$value) {
+        // import
+        $constructorParams = [];
+        foreach ($data as $key => $value) {
             foreach (static::processors($key) as $type => $processor) if ($value !== null) {
                 if ($type === "validator" && call_user_func($processor, $value) === false) {
                     throw new \InvalidArgumentException("invalid value at key: $key");
@@ -89,10 +90,13 @@ class Book implements \JsonSerializable
                     $value = call_user_func($processor, $value);
                 }
             }
+            if (property_exists(static::class, $key)) {
+                $constructorParams[$key] = $value;
+            }
         }
 
         // create
-        return new static(...$data);
+        return new static(...$constructorParams);
     }
 
     public function toArray(): array

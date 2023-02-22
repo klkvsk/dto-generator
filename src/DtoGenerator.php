@@ -20,6 +20,7 @@ use Klkvsk\DtoGenerator\Generator\Builder\EnumBuilderInterface;
 use Klkvsk\DtoGenerator\Generator\Builder\EnumLegacyBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\EnumNativeBuilder;
 use Klkvsk\DtoGenerator\Schema\AbstractObject;
+use Klkvsk\DtoGenerator\Schema\ExtraFieldsPolicy;
 use Klkvsk\DtoGenerator\Schema\Schema;
 use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\ClassType;
@@ -46,10 +47,10 @@ class DtoGenerator implements LoggerAwareInterface
 
     public static bool $withListTypeChecks = true;
     public static bool $withFileComments = true;
-    public static bool $withRequiredFieldsFirst = true;
     public static bool $withCreateMethods = true;
     public static bool $withPublicDefaultMethods = false;
     public static bool $withPublicRequiredMethods = false;
+    public static ExtraFieldsPolicy $withExtraFieldsPolicy = ExtraFieldsPolicy::IGNORE;
 
     public static bool $withJsonSerialize = true;
     public static bool $withToArray = true;
@@ -63,9 +64,7 @@ class DtoGenerator implements LoggerAwareInterface
         $this->printer = new PsrPrinter();
         $this->logger = new NullLogger();
 
-        $this->classBuilder = new ClassBuilder(
-            putRequiredFieldsFirst: self::$withRequiredFieldsFirst
-        );
+        $this->classBuilder = new ClassBuilder();
 
         $this->classBuilder->addMembersBuilder(
             new PropertiesBuilder(
@@ -95,7 +94,10 @@ class DtoGenerator implements LoggerAwareInterface
                     new ProcessorsMethodBuilder(withFirstClassCallableSyntax: self::$useFirstClassCallableSyntax)
                 )
                 ->addMembersBuilder(
-                    new CreateMethodBuilder(withCreatorVariadic: self::$useCreatorVariadic)
+                    new CreateMethodBuilder(
+                        withCreatorVariadic: self::$useCreatorVariadic,
+                        extraFieldsPolicy: self::$withExtraFieldsPolicy,
+                    )
                 );
         }
 
@@ -159,6 +161,9 @@ class DtoGenerator implements LoggerAwareInterface
             . "declare(strict_types=1);\n\n"
             . "namespace {$ns->getName()};\n\n"
             . $this->printer->printClass($class, $ns);
+
+        // remove trailing comas in argument lists (not supported in php<8)
+        $code = preg_replace('/,(\s*\))/', '\\1', $code);
 
         $oldCode = file_exists($file) ? file_get_contents($file) : '';
         $diff = $oldCode != $code;

@@ -4,7 +4,10 @@ declare(strict_types=1);
 namespace Klkvsk\DtoGenerator\Generator\Builder\Class;
 
 use Klkvsk\DtoGenerator\Schema\Dto;
+use Klkvsk\DtoGenerator\Schema\ExtraFieldsPolicy;
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\Literal;
+use Nette\PhpGenerator\Parameter;
 use Nette\PhpGenerator\PhpNamespace;
 
 class CreateMethodBuilder implements ClassMembersBuilderInterface
@@ -12,7 +15,8 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
     const METHOD_NAME = 'create';
 
     public function __construct(
-        protected bool $withCreatorVariadic = false
+        protected bool $withCreatorVariadic = false,
+        protected ExtraFieldsPolicy $extraFieldsPolicy = ExtraFieldsPolicy::IGNORE
     )
     {
 
@@ -46,31 +50,80 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
                 ->addBody('');
         }
 
+        $creator
+            ->addBody('// import')
+            ->addBody('$constructorParams = [];');
+        if ($this->extraFieldsPolicy != ExtraFieldsPolicy::IGNORE) {
+            $creator
+                ->addBody('$extraFields = [];');
+        }
+        $creator
+            ->addBody('foreach ($data as $key => $value) {');
         if ($class->hasMethod(ProcessorsMethodBuilder::METHOD_NAME)) {
             $creator
-                ->addBody('// process')
-                ->addBody('foreach ($data as $key => &$value) {')
                 ->addBody('    foreach (static::?($key) as $type => $processor) if ($value !== null) {', [ProcessorsMethodBuilder::METHOD_NAME])
                 ->addBody('        if ($type === "validator" && call_user_func($processor, $value) === false) {')
                 ->addBody('            throw new \\InvalidArgumentException("invalid value at key: $key");')
                 ->addBody('        } else {')
                 ->addBody('            $value = call_user_func($processor, $value);')
                 ->addBody('        }')
-                ->addBody('    }')
-                ->addBody('}')
-                ->addBody('');
+                ->addBody('    }');
+        }
+        $creator
+            ->addBody('    if (property_exists(static::class, $key)) {')
+            ->addBody('        $constructorParams[$key] = $value;');
+        if ($this->extraFieldsPolicy != ExtraFieldsPolicy::IGNORE) {
+            $creator
+                ->addBody('    } else {')
+                ->addBody('        $extraFields[$key] = $value;');
         }
 
-        $creator->addBody('// create');
-        if ($this->withCreatorVariadic) {
-            $creator->addBody('return new static(...$data);');
-        } else {
-            $creator->addBody('return new static(');
-            $constructor = $class->getMethod('__construct');
-            foreach ($constructor->getParameters() as $constructorParameter) {
-                $creator->addBody('    $data[?],', [$constructorParameter->getName()]);
-            }
-            $creator->addBody(');');
+        $creator
+            ->addBody('    }')
+            ->addBody('}')
+            ->addBody('');
+
+        $constructor = $class->getMethod('__construct');
+        $constructorParams = array_map(
+            fn(Parameter $p) => new Literal("\$constructorParams[\"{$p->getName()}\"]"),
+            $constructor->getParameters()
+        );
+
+        $creator
+            ->addBody('// create');
+
+        if ($this->extraFieldsPolicy === ExtraFieldsPolicy::THROW) {
+            $creator
+                ->addBody('if (!empty($extraFields)) {')
+                ->addBody('    throw new \\InvalidArgumentException("found extra fields: " . implode(", ", $extraFields));')
+                ->addBody('}');
         }
+
+        if ($this->withCreatorVariadic) {
+            $newStatement = 'new static(...$constructorParams);';
+        } else {
+            $newStatement = "new static(\n";
+            foreach ($constructorParams as $constructorParamLiteral) {
+                $newStatement .= "    $constructorParamLiteral,\n";
+            }
+            $newStatement = rtrim($newStatement, ",\n") . "\n";
+            $newStatement .= ");";
+        }
+
+        if ($this->extraFieldsPolicy === ExtraFieldsPolicy::COLLECT) {
+            $creator
+                ->addBody('$self = ' . $newStatement)
+                ->addBody('(self::$extraFields ??= new \WeakMap())->offsetSet($self, $extraFields);')
+                ->addBody('return $self;');
+
+            $class->addProperty('extraFields')->setProtected()->setStatic()->setType('\\WeakMap');
+            $class->addMethod('extra')->setPublic()->setReturnType('array')
+                ->addBody('return self::$extraFields[$this] ?? [];');
+        } else {
+            $creator
+                ->addBody('return ' . $newStatement);
+        }
+
+
     }
 }

@@ -38,28 +38,18 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                 $this->build($parent, $ns, $parentClass);
                 $parentConstructor = $parentClass->getMethod('__construct');
                 $constructor->setComment($parentConstructor->getComment());
-                $constructor->setParameters(array_map(
-                    function (Parameter $p): Parameter {
-                        if ($p instanceof PromotedParameter) {
-                            $p2 = (new Parameter($p->getName()))
-                                ->setNullable($p->isNullable());
-                            if ($p->hasDefaultValue()) {
-                                $p2->setDefaultValue($p->getDefaultValue());
-                            }
-                            $p2->setType((string)$p->getType() ?: null);
-                            return $p2;
-                        } else {
-                            return $p;
-                        }
-                    },
-                    $parentConstructor->getParameters()
-                ));
+                $constructor->setParameters(
+                    array_map(
+                        $this->depromoteParameter(...),
+                        $parentConstructor->getParameters()
+                    )
+                );
                 $parentConstructorPass = array_map(
-                    fn (Parameter $p) => new Literal("\${$p->getName()}"),
+                    fn(Parameter $p) => new Literal("\${$p->getName()}"),
                     $parentConstructor->getParameters()
                 );
 
-                $constructor->addBody('parent::__construct(...?);', [ $parentConstructorPass ]);
+                $constructor->addBody('parent::__construct(...?);', [$parentConstructorPass]);
             }
         }
 
@@ -150,6 +140,26 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                 }
             }
         }
+
+        $constructorParameters = $constructor->getParameters();
+        usort($constructorParameters, fn (Parameter $a, Parameter $b) => $a->isNullable() <=> $b->isNullable());
+        $constructor->setParameters($constructorParameters);
+    }
+
+    protected function depromoteParameter(Parameter $parameter): Parameter
+    {
+        if (!$parameter instanceof PromotedParameter) {
+            return clone $parameter;
+        }
+
+        $copy = new Parameter($parameter->getName());
+        $copy->setNullable($parameter->isNullable());
+        if ($parameter->hasDefaultValue()) {
+            $copy->setDefaultValue($parameter->getDefaultValue());
+        }
+        $copy->setType((string)$parameter->getType() ?: null);
+
+        return $copy;
     }
 
 }
