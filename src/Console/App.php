@@ -52,7 +52,6 @@ class App extends PSR3CLIv3
         $this->info('Generating code for PHP >= ' . $phpMinVersion);
 
         try {
-            $generator = new DtoGenerator();
             foreach ($files as $file) {
                 if (! file_exists($file)) {
                     throw new GeneratorException("File was not found: $file");
@@ -61,6 +60,7 @@ class App extends PSR3CLIv3
                 if (! $schema instanceof Schema) {
                     throw new GeneratorException("Schema was not returned from $file");
                 }
+                $generator = new DtoGenerator();
                 $generator->setLogger($this);
                 $generator->write($schema);
             }

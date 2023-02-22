@@ -95,7 +95,7 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
         if ($this->extraFieldsPolicy === ExtraFieldsPolicy::THROW) {
             $creator
                 ->addBody('if (!empty($extraFields)) {')
-                ->addBody('    throw new \\InvalidArgumentException("found extra fields: " . implode(", ", $extraFields));')
+                ->addBody('    throw new \\InvalidArgumentException("found extra fields: " . json_encode($extraFields));')
                 ->addBody('}');
         }
 

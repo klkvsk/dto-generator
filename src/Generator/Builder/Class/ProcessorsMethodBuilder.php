@@ -61,7 +61,7 @@ class ProcessorsMethodBuilder implements ClassMembersBuilderInterface
                 $switchBody .= "case \"$caseField\":\n";
             }
             $switchBody .= trim($case) . "\n";
-            $switchBody .= "break;\n\n";
+            $switchBody .= "return;\n\n";
         }
 
         $body = "switch (\$key) {\n" . trim($switchBody) . "\n}\n";
