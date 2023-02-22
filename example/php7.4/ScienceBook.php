@@ -79,7 +79,7 @@ class ScienceBook extends Book implements \JsonSerializable
         $data += static::defaults();
 
         // check required
-        if ($diff = array_diff(array_keys($data), static::required())) {
+        if ($diff = array_diff(static::required(), array_keys($data))) {
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 

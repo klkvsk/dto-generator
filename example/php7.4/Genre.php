@@ -29,7 +29,7 @@ final class Genre implements \JsonSerializable
      */
     public static function cases(): array
     {
-        return self::$map = self::$map ?: [
+        return self::$map = self::$map ?? [
             'romance' => new self('ROMANCE', 'romance'),
             'comedy' => new self('COMEDY', 'comedy'),
             'drama' => new self('DRAMA', 'drama'),

@@ -85,9 +85,7 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             $casesMap[$value] = new Literal('new self(?, ?)', [$case, $value]);
         }
 
-        $casesMethod->addBody('return self::$map = self::$map \?: ?;', [
-            $casesMap,
-        ]);
+        $casesMethod->addBody('return self::$map = self::$map \?\? ?;', [$casesMap]);
 
         $class->addImplement('\\JsonSerializable');
         $class->addMethod('jsonSerialize')

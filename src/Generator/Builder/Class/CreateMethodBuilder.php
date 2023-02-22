@@ -40,7 +40,7 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
         if ($class->hasMethod(RequiredMethodBuilder::METHOD_NAME)) {
             $creator
                 ->addBody('// check required')
-                ->addBody('if ($diff = array_diff(array_keys($data), static::?())) {', [RequiredMethodBuilder::METHOD_NAME])
+                ->addBody('if ($diff = array_diff(static::?(), array_keys($data))) {', [RequiredMethodBuilder::METHOD_NAME])
                 ->addBody('    throw new \\InvalidArgumentException("missing keys: " . implode(", ", $diff));')
                 ->addBody('}')
                 ->addBody('');

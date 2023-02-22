@@ -72,7 +72,7 @@ class Author implements \JsonSerializable
     public static function create(array $data): self
     {
         // check required
-        if ($diff = array_diff(array_keys($data), static::required())) {
+        if ($diff = array_diff(static::required(), array_keys($data))) {
             throw new \InvalidArgumentException("missing keys: " . implode(", ", $diff));
         }
 
