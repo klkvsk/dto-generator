@@ -7,7 +7,7 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * This class is auto-generated with klkvsk/dto-generator
  * Do not modify it, any changes might be overwritten!
  *
- * @see project://example/dto.schema.php (line 38)
+ * @see project://example/dto.schema.php (line 41)
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
@@ -71,33 +71,25 @@ class Book implements \JsonSerializable
         return ['id', 'title', 'author'];
     }
 
-    protected static function processors(string $key): \Generator
+    /**
+     * @return callable[]
+     */
+    protected static function importers(string $key): iterable
     {
-        switch ($key) {
-            case "id":
-            case "rating":
-                yield 'importer' => \Closure::fromCallable('intval');
-                break;
-
-            case "title":
-                yield 'importer' => \Closure::fromCallable('strval');
-                break;
-
-            case "released":
-                yield 'importer' => static fn ($d) => new \DateTimeImmutable($d, null);
-                break;
-
-            case "author":
-                yield 'importer' => fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data);
-                break;
-
-            case "genres":
-                yield 'importer' => fn ($array) => array_map(
+        return match($key) {
+            "id", "rating" => [ \Closure::fromCallable('intval') ],
+            "title" => [ \Closure::fromCallable('strval') ],
+            "released" => [ static fn ($d) => new \DateTimeImmutable($d) ],
+            "author" => [
+                fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Author', 'create' ], $data)
+            ],
+            "genres" => [
+                fn ($array) => array_map(
                     fn ($data) => call_user_func([ '\Klkvsk\DtoGenerator\Example\One\Genre', 'from' ], $data),
                     (array)$array
-                );
-                break;
-        }
+                )
+            ],
+        };
     }
 
     /**
@@ -116,12 +108,8 @@ class Book implements \JsonSerializable
         // import
         $constructorParams = [];
         foreach ($data as $key => $value) {
-            foreach (static::processors($key) as $type => $processor) if ($value !== null) {
-                if ($type === "validator" && call_user_func($processor, $value) === false) {
-                    throw new \InvalidArgumentException("invalid value at key: $key");
-                } else {
-                    $value = call_user_func($processor, $value);
-                }
+            foreach (static::importers($key) as $importer) if ($value !== null) {
+                $value = call_user_func($importer, $value);
             }
             if (property_exists(static::class, $key)) {
                 $constructorParams[$key] = $value;

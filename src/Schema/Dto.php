@@ -6,7 +6,7 @@ namespace Klkvsk\DtoGenerator\Schema;
 class Dto extends AbstractObject
 {
     /**
-     * @var \ArrayObject<string, Field>
+     * @var \ArrayObject|iterable<Field>
      */
     public readonly \ArrayObject $fields;
 

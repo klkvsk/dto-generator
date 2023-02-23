@@ -36,10 +36,14 @@ function bool(): BuiltinType
  */
 function date(DateTimeZone $dateTimeZone = null, string $format = null): Type
 {
-    if ($format) {
+    if ($format && $dateTimeZone) {
         $importer = static fn ($d) => DateTimeImmutable::createFromFormat($format, $d, $dateTimeZone);
-    } else {
+    } else if ($format) {
+        $importer = static fn ($d) => DateTimeImmutable::createFromFormat($format, $d);
+    } else if ($dateTimeZone) {
         $importer = static fn ($d) => new DateTimeImmutable($d, $dateTimeZone);
+    } else {
+        $importer = static fn ($d) => new DateTimeImmutable($d);
     }
     return external(DateTimeInterface::class, $importer);
 }

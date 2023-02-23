@@ -59,14 +59,10 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
         }
         $creator
             ->addBody('foreach ($data as $key => $value) {');
-        if ($class->hasMethod(ProcessorsMethodBuilder::METHOD_NAME)) {
+        if ($class->hasMethod(ImportersMethodBuilder::METHOD_NAME)) {
             $creator
-                ->addBody('    foreach (static::?($key) as $type => $processor) if ($value !== null) {', [ProcessorsMethodBuilder::METHOD_NAME])
-                ->addBody('        if ($type === "validator" && call_user_func($processor, $value) === false) {')
-                ->addBody('            throw new \\InvalidArgumentException("invalid value at key: $key");')
-                ->addBody('        } else {')
-                ->addBody('            $value = call_user_func($processor, $value);')
-                ->addBody('        }')
+                ->addBody('    foreach (static::?($key) as $importer) if ($value !== null) {', [ImportersMethodBuilder::METHOD_NAME])
+                ->addBody('        $value = call_user_func($importer, $value);')
                 ->addBody('    }');
         }
         $creator
@@ -123,7 +119,5 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
             $creator
                 ->addBody('return ' . $newStatement);
         }
-
-
     }
 }

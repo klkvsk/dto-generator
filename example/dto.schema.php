@@ -31,7 +31,10 @@ return dto\schema(
                 ),
                 dto\field('lastName', t\string(),
                     filters: [ fn ($x) => trim($x) ],
-                    validators: [ fn ($x) => strlen($x) > 2 ]
+                    validators: [
+                        'tooShort' => fn ($x) => strlen($x) > 5,
+                        'tooLong' => fn ($x) => strlen($x) < 40,
+                    ]
                 ),
             ]
         ),

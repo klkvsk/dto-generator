@@ -27,7 +27,8 @@ class CodeStyle
             'for'     => ['endfor'],
             'switch'  => ['endswitch'],
             'while'   => ['endwhile'],
-            'case'    => ['break', 'return', 'throw', 'case']
+            'case'    => ['break', 'return', 'throw', 'case', '}'],
+            'default' => ['}'],
         ];
 
         $lines = [];
@@ -50,8 +51,11 @@ class CodeStyle
 
                 foreach ($namedBlocks[$currentBlockStart] ?? [] as $namedBlockEnd) {
                     if (str_starts_with($line, $namedBlockEnd)) {
-                        if ($currentBlockStart === 'case' && $namedBlockEnd !== 'case') {
+                        if ($currentBlockStart === 'case' && in_array($namedBlockEnd, [ 'break', 'return', 'throw' ])) {
                             $correctionLevel = 1;
+                        }
+                        if (in_array($currentBlockStart, [ 'case', 'default' ]) && $namedBlockEnd === '}') {
+                            $correctionLevel = -1;
                         }
                         $stack->pop();
                     }

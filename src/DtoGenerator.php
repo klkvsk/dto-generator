@@ -11,14 +11,16 @@ use Klkvsk\DtoGenerator\Exception\SchemaException;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\CreateMethodBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\DefaultsMethodBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\ExportMethodsBuilder;
-use Klkvsk\DtoGenerator\Generator\Builder\Class\ProcessorsMethodBuilder;
+use Klkvsk\DtoGenerator\Generator\Builder\Class\ImportersMethodBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\PropertiesBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\Class\RequiredMethodBuilder;
+use Klkvsk\DtoGenerator\Generator\Builder\Class\ValidationBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\ClassBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\ClassBuilderInterface;
 use Klkvsk\DtoGenerator\Generator\Builder\EnumBuilderInterface;
 use Klkvsk\DtoGenerator\Generator\Builder\EnumLegacyBuilder;
 use Klkvsk\DtoGenerator\Generator\Builder\EnumNativeBuilder;
+use Klkvsk\DtoGenerator\Generator\ClosurePrinter;
 use Klkvsk\DtoGenerator\Schema\AbstractObject;
 use Klkvsk\DtoGenerator\Schema\ExtraFieldsPolicy;
 use Klkvsk\DtoGenerator\Schema\Schema;
@@ -42,6 +44,7 @@ class DtoGenerator implements LoggerAwareInterface
     public static bool $useReadonlyProperties = false;
     public static bool $usePhpEnums = false;
     public static bool $useFirstClassCallableSyntax = false;
+    public static bool $useMatchSyntax = false;
     public static bool $useMixedType = false;
     public static bool $useCreatorVariadic = false;
 
@@ -66,6 +69,10 @@ class DtoGenerator implements LoggerAwareInterface
 
         $this->classBuilder = new ClassBuilder();
 
+        $closurePrinter = new ClosurePrinter(
+            self::$useFirstClassCallableSyntax
+        );
+
         $this->classBuilder->addMembersBuilder(
             new PropertiesBuilder(
                 withPromotedParameters: self::$usePromotedParameters || self::$useReadonlyProperties,
@@ -74,6 +81,10 @@ class DtoGenerator implements LoggerAwareInterface
                 withGetters: !self::$useReadonlyProperties,
                 withListTypeChecks: self::$withListTypeChecks,
             )
+        );
+
+        $this->classBuilder->addMembersBuilder(
+            new ValidationBuilder($closurePrinter)
         );
 
         if (self::$withCreateMethods || self::$withPublicDefaultMethods) {
@@ -91,7 +102,10 @@ class DtoGenerator implements LoggerAwareInterface
         if (self::$withCreateMethods) {
             $this->classBuilder
                 ->addMembersBuilder(
-                    new ProcessorsMethodBuilder(withFirstClassCallableSyntax: self::$useFirstClassCallableSyntax)
+                    new ImportersMethodBuilder(
+                        $closurePrinter,
+                        self::$useMatchSyntax,
+                    )
                 )
                 ->addMembersBuilder(
                     new CreateMethodBuilder(
@@ -124,14 +138,9 @@ class DtoGenerator implements LoggerAwareInterface
         $this->logger->debug("Writing schema '$schema->namespace'");
         foreach ($namespaces as $namespace) {
             $relativeNamespace = substr($namespace->getName(), strlen($schema->namespace));
-            $relativeDir = null;
-            if ($relativeNamespace) {
-                $relativeDir = str_replace('\\', DIRECTORY_SEPARATOR, $relativeNamespace);
-            }
+            $relativeDir = str_replace('\\', DIRECTORY_SEPARATOR, $relativeNamespace);
             foreach ($namespace->getClasses() as $class) {
-                $file = $outputDir
-                    . ($relativeDir ? DIRECTORY_SEPARATOR . $relativeDir : '')
-                    . DIRECTORY_SEPARATOR . $class->getName() . '.php';
+                $file = $outputDir . $relativeDir . DIRECTORY_SEPARATOR . $class->getName() . '.php';
                 $this->writeClass($namespace, $class, $file);
             }
         }

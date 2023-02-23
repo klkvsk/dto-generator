@@ -10,11 +10,16 @@ This package allows you to generate clean and independent DTO-classes
 
 ## Installation
 
-You only need this package while development, since generated classes
+You only need this package in development environment, since generated classes
 do not use anything from this library's code. That is why the preferred
 way is to include it as `require-dev`:
 
     $ composer require --dev klkvsk/dto-generator
+
+## Requirements
+
+- PHP 8.1+: to run generator in development
+- PHP 7.4 or 8.x: to use generated code in production
 
 ## Usage
 
@@ -112,30 +117,22 @@ DTOs serve a purpose to keep your data strongly typed. Types for schema are:
 
 Also, you can extend the abstract `Type` class for your needs.
 
-### Hydration, filtering and validation
+### Hydration and validation
 
-Each generated DTO have a static method `<DTO>::create(array $data)`
-that instantiates and fill it with `$data`.
+DTOs can be created with a regular constructor or with `<DTO>::create(array $data)` method.
 
-Hydration of properties is done with a chain of closures of three types (defined in `<DTO>::processors()`):
+Method `create` accepts an associative array with data.
+That data is then **filtered** (if it needs some cleaning up beforehand)
+and **imported** (converted to proper types).
+After that, the method calls a default constructor, passing imported fields to it.
+The constructor get fields **validated** not only by type, but by a custom logic.
+
+So, there are three stages of data manipulation, each can be described in schema
+with callables:
+
 1. `filter` prepares data to be imported
 2. `importer` casts value to correct type or instantiates a nested object
 3. `validator` checks that imported value meets specified criteria
-
-Example in generated code:
-```
-protected static function processors(string $key): \Generator
-{
-    switch ($key) {
-        case 'fullName':
-            yield 'filter' => fn ($x) => \trim($x);
-            yield 'importer' => strval(...);
-            yield 'validator' => fn ($x) => \strlen($x) > 2;
-            break;
-        case ...
-    }
-}
-```
 
 `filter` and `importer` closures should return processed value.
 If a `null` is returned, further closures are not called.
@@ -156,7 +153,9 @@ Closure of type `importer` is predefined for all types except `t\object`:
 dto\field('file', t\external(SplFileInfo::class, fn ($x) => new SplFileInfo($x))
 ```
 
-## Example
+You can specify a custom importer if you extend `Type` for your own needs.
+
+## Examples
 
 See [/example/](./example) dir for the example schema and generated classes
 for different PHP versions.

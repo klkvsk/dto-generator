@@ -23,6 +23,7 @@ class FeatureSupport
             DtoGenerator::$useMixedType = true;
             DtoGenerator::$useCreatorVariadic = true;
             DtoGenerator::$usePromotedParameters = true;
+            DtoGenerator::$useMatchSyntax = true;
         };
         yield '8.1' => function () {
             DtoGenerator::$useReadonlyProperties = true;

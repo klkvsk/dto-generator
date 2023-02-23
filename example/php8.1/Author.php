@@ -19,6 +19,14 @@ class Author implements \JsonSerializable
         public readonly string $firstName,
         public readonly ?string $lastName = null
     ) {
+        $this->validate(['lastName' => ['tooShort' => fn ($x) => \strlen($x) > 5, 'tooLong' => fn ($x) => \strlen($x) < 40]]);
+    }
+
+    protected function validate(array $rules): void
+    {
+        array_walk($rules, fn(&$vs, $f) => array_walk($vs, fn(&$v) => $v = !call_user_func($v, $this->{$f})));
+        $failedRules = array_filter(array_map(fn($r) => array_keys(array_filter($r)), $rules));
+        if ($failedRules) throw new \InvalidArgumentException(json_encode($failedRules));
     }
 
     protected static function required(): array
@@ -26,25 +34,16 @@ class Author implements \JsonSerializable
         return ['id', 'firstName'];
     }
 
-    protected static function processors(string $key): \Generator
+    /**
+     * @return callable[]
+     */
+    protected static function importers(string $key): iterable
     {
-        switch ($key) {
-            case "id":
-                yield 'importer' => intval(...);
-                break;
-
-            case "firstName":
-                yield 'filter' => fn ($x) => \trim($x);
-                yield 'filter' => strval(...);
-                yield 'importer' => strval(...);
-                break;
-
-            case "lastName":
-                yield 'filter' => fn ($x) => \trim($x);
-                yield 'importer' => strval(...);
-                yield 'validator' => fn ($x) => \strlen($x) > 2;
-                break;
-        }
+        return match($key) {
+            "id" => [ intval(...) ],
+            "firstName" => [ fn ($x) => \trim($x), strval(...), strval(...) ],
+            "lastName" => [ fn ($x) => \trim($x), strval(...) ],
+        };
     }
 
     /**
@@ -60,12 +59,8 @@ class Author implements \JsonSerializable
         // import
         $constructorParams = [];
         foreach ($data as $key => $value) {
-            foreach (static::processors($key) as $type => $processor) if ($value !== null) {
-                if ($type === "validator" && call_user_func($processor, $value) === false) {
-                    throw new \InvalidArgumentException("invalid value at key: $key");
-                } else {
-                    $value = call_user_func($processor, $value);
-                }
+            foreach (static::importers($key) as $importer) if ($value !== null) {
+                $value = call_user_func($importer, $value);
             }
             if (property_exists(static::class, $key)) {
                 $constructorParams[$key] = $value;
