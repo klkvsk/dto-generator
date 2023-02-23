@@ -58,6 +58,7 @@ class Author implements \JsonSerializable
             "id" => [ \Closure::fromCallable('intval') ],
             "firstName" => [ fn ($x) => \trim($x), \Closure::fromCallable('strval'), \Closure::fromCallable('strval') ],
             "lastName" => [ fn ($x) => \trim($x), \Closure::fromCallable('strval') ],
+            default => []
         };
     }
 

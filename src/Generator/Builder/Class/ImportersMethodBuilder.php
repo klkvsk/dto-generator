@@ -118,6 +118,8 @@ class ImportersMethodBuilder implements ClassMembersBuilderInterface
             } else {
                 $innerBody .= "default:\n$parentCall;\n";
             }
+        } else if ($useMatch) {
+            $innerBody .= "default => []\n";
         }
 
         $innerBody = trim($innerBody);

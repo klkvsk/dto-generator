@@ -99,9 +99,9 @@ class Author implements \JsonSerializable
 
         // create
         return new static(
-            $constructorParams["id"],
-            $constructorParams["firstName"],
-            $constructorParams["lastName"]
+            $constructorParams["id"] ?? null,
+            $constructorParams["firstName"] ?? null,
+            $constructorParams["lastName"] ?? null
         );
     }
 

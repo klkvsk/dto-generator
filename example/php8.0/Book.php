@@ -89,6 +89,7 @@ class Book implements \JsonSerializable
                     (array)$array
                 )
             ],
+            default => []
         };
     }
 

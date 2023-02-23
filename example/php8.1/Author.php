@@ -43,6 +43,7 @@ class Author implements \JsonSerializable
             "id" => [ intval(...) ],
             "firstName" => [ fn ($x) => \trim($x), strval(...), strval(...) ],
             "lastName" => [ fn ($x) => \trim($x), strval(...) ],
+            default => []
         };
     }
 

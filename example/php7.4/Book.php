@@ -141,12 +141,12 @@ class Book implements \JsonSerializable
 
         // create
         return new static(
-            $constructorParams["id"],
-            $constructorParams["title"],
-            $constructorParams["author"],
-            $constructorParams["genres"],
-            $constructorParams["released"],
-            $constructorParams["rating"]
+            $constructorParams["id"] ?? null,
+            $constructorParams["title"] ?? null,
+            $constructorParams["author"] ?? null,
+            $constructorParams["genres"] ?? [],
+            $constructorParams["released"] ?? null,
+            $constructorParams["rating"] ?? 5
         );
     }
 

@@ -81,7 +81,7 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
 
         $constructor = $class->getMethod('__construct');
         $constructorParams = array_map(
-            fn(Parameter $p) => new Literal("\$constructorParams[\"{$p->getName()}\"]"),
+            fn(Parameter $p) => new Literal("\$constructorParams[\"{$p->getName()}\"] \?\? ?", [ $p->getDefaultValue() ]),
             $constructor->getParameters()
         );
 
