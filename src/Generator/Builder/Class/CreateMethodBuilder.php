@@ -102,6 +102,8 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
                 ->addBody('}');
         }
 
+        $creator->addBody('/** @psalm-suppress PossiblyNullArgument */');
+
         if ($this->withCreatorVariadic) {
             $newStatement = 'new static(...$constructorParams);';
         } else {
