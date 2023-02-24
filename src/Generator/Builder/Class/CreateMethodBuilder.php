@@ -6,6 +6,7 @@ namespace Klkvsk\DtoGenerator\Generator\Builder\Class;
 use Klkvsk\DtoGenerator\Schema\Dto;
 use Klkvsk\DtoGenerator\Schema\ExtraFieldsPolicy;
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\Dumper;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Parameter;
 use Nette\PhpGenerator\PhpNamespace;
@@ -81,7 +82,13 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
 
         $constructor = $class->getMethod('__construct');
         $constructorParams = array_map(
-            fn(Parameter $p) => new Literal("\$constructorParams[\"{$p->getName()}\"] \?\? ?", [ $p->getDefaultValue() ]),
+            function (Parameter $p) {
+                $element = "\$constructorParams[\"{$p->getName()}\"]";
+                if ($p->isNullable()) {
+                    $element .= " ?? " . (new Dumper)->dump($p->getDefaultValue() ? $p->hasDefaultValue() : null);
+                }
+                return new Literal($element);
+            },
             $constructor->getParameters()
         );
 
@@ -112,7 +119,12 @@ class CreateMethodBuilder implements ClassMembersBuilderInterface
                 ->addBody('(self::$extraFields ??= new \WeakMap())->offsetSet($self, $extraFields);')
                 ->addBody('return $self;');
 
-            $class->addProperty('extraFields')->setProtected()->setStatic()->setType('\\WeakMap');
+            $class->addProperty('extraFields')
+                ->setProtected()
+                ->setStatic()
+                ->setType('\\WeakMap')
+                ->setNullable();
+
             $class->addMethod('extra')->setPublic()->setReturnType('array')
                 ->addBody('return self::$extraFields[$this] ?? [];');
         } else {

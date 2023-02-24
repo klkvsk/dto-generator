@@ -49,23 +49,23 @@ function date(DateTimeZone $dateTimeZone = null, string $format = null): Type
 }
 
 /**
- * @param class-string<Dto>|Dto $dto
+ * @param string|Dto $dto
  * @return DtoType
  */
 function object(Dto|string $dto): DtoType
 {
-    $dtoName = $dto instanceof Dto ? $dto->name : (string)$dto;
+    $dtoName = $dto instanceof Dto ? $dto->name : $dto;
     return new DtoType($dtoName);
 }
 
 
 /**
- * @param class-string<Enum>|Enum $enum
+ * @param string|Enum $enum
  * @return EnumType
  */
 function enum(string|Enum $enum): EnumType
 {
-    $enumName = $enum instanceof Enum ? $enum->name : (string)$enum;
+    $enumName = $enum instanceof Enum ? $enum->name : $enum;
     return new EnumType($enumName);
 }
 

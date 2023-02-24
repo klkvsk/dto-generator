@@ -14,7 +14,7 @@ class EnumLegacyBuilder implements EnumBuilderInterface
     {
         $class = $ns->addClass($enum->getShortName())->setFinal();
 
-        $class->addProperty('map')->setType('array')->setStatic();
+        $class->addProperty('map')->setType('array')->setStatic()->setNullable();
         $class->addProperty('name')->setType('string');
         $class->addProperty('value')->setType($enum->backedType);
 

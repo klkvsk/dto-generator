@@ -17,4 +17,10 @@ class MixedType extends Type
     {
         return DtoGenerator::$useMixedType ? 'mixed' : '';
     }
+
+    public function buildTypeHint(Schema $schema): string
+    {
+        return 'mixed';
+    }
+
 }

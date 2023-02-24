@@ -21,7 +21,7 @@ class ListType extends Type
     public function buildTypeHint(Schema $schema): string
     {
         $subtype = $this->elementType->buildTypeHint($schema);
-        return "list<$subtype>";
+        return "array<$subtype>";
     }
 
     public function buildImporter(Schema $schema): ?Closure

@@ -7,7 +7,7 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * This class is auto-generated with klkvsk/dto-generator
  * Do not modify it, any changes might be overwritten!
  *
- * @see project://example/dto.schema.php (line 41)
+ * @see project://example/dto.schema.php
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
@@ -20,16 +20,16 @@ class Book implements \JsonSerializable
     protected Author $author;
     protected ?int $rating;
 
-    /** @var list<Genre> $genres */
+    /** @var array<Genre> $genres */
     protected array $genres;
 
     public function __construct(
         int $id,
         string $title,
         Author $author,
-        array $genres = [],
         ?\DateTimeInterface $released = null,
-        ?int $rating = 5
+        ?int $rating = 5,
+        array $genres = []
     ) {
         $this->id = $id;
         $this->title = $title;
@@ -66,7 +66,7 @@ class Book implements \JsonSerializable
     }
 
     /**
-     * @return list<Genre>
+     * @return array<Genre>
      */
     public function getGenres(): array
     {
@@ -84,7 +84,7 @@ class Book implements \JsonSerializable
     }
 
     /**
-     * @return callable[]
+     * @return iterable<int,\Closure>
      */
     protected static function importers(string $key): iterable
     {
@@ -141,12 +141,12 @@ class Book implements \JsonSerializable
 
         // create
         return new static(
-            $constructorParams["id"] ?? null,
-            $constructorParams["title"] ?? null,
-            $constructorParams["author"] ?? null,
-            $constructorParams["genres"] ?? [],
+            $constructorParams["id"],
+            $constructorParams["title"],
+            $constructorParams["author"],
             $constructorParams["released"] ?? null,
-            $constructorParams["rating"] ?? 5
+            $constructorParams["rating"] ?? true,
+            $constructorParams["genres"]
         );
     }
 

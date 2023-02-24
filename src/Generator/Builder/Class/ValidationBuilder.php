@@ -3,9 +3,10 @@
 namespace Klkvsk\DtoGenerator\Generator\Builder\Class;
 
 use Klkvsk\DtoGenerator\Generator\ClosurePrinter;
+use Klkvsk\DtoGenerator\Generator\CodeStyle;
 use Klkvsk\DtoGenerator\Schema\Dto;
-use Nette\PhpGenerator\ClassLike;
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\Dumper;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\PhpNamespace;
 
@@ -45,7 +46,7 @@ class ValidationBuilder implements ClassMembersBuilderInterface
         $this->buildMethod($class);
 
         $constructor = $class->getMethod('__construct');
-        $constructor->addBody('$this->validate(?);', [ $rules ]);
+        $constructor->addBody(CodeStyle::indent((new Dumper())->format('$this->validate(?);', [ $rules ])));
     }
 
     public function buildMethod(ClassType $class)
@@ -53,7 +54,7 @@ class ValidationBuilder implements ClassMembersBuilderInterface
         $method = $class->addMethod(static::METHOD_NAME)
             ->setReturnType('void')
             ->setProtected()
-            ->addBody('array_walk($rules, fn(&$vs, $f) => array_walk($vs, fn(&$v) => $v = !call_user_func($v, $this->{$f})));')
+            ->addBody('array_walk($rules, fn(&$vs, $f) => array_walk($vs, fn(&$v) => $v = false === call_user_func($v, $this->{$f})));')
             ->addBody('$failedRules = array_filter(array_map(fn($r) => array_keys(array_filter($r)), $rules));')
             ->addBody('if ($failedRules) throw new \InvalidArgumentException(json_encode($failedRules));');
         $method->addParameter('rules')->setType('array');

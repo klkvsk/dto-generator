@@ -7,7 +7,7 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * This class is auto-generated with klkvsk/dto-generator
  * Do not modify it, any changes might be overwritten!
  *
- * @see project://example/dto.schema.php (line 41)
+ * @see project://example/dto.schema.php
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
@@ -15,15 +15,15 @@ namespace Klkvsk\DtoGenerator\Example\One;
 class Book implements \JsonSerializable
 {
     /**
-     * @param list<Genre> $genres
+     * @param array<Genre> $genres
      */
     public function __construct(
         public readonly int $id,
         public readonly string $title,
         public readonly Author $author,
-        public readonly array $genres = [],
         public readonly ?\DateTimeInterface $released = null,
-        public readonly ?int $rating = 5
+        public readonly ?int $rating = 5,
+        public readonly array $genres = []
     ) {
         (function(Genre ...$_) {})( ...$genres);
     }
@@ -39,7 +39,7 @@ class Book implements \JsonSerializable
     }
 
     /**
-     * @return callable[]
+     * @return iterable<int,\Closure>
      */
     protected static function importers(string $key): iterable
     {

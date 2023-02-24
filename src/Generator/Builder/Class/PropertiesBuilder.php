@@ -2,9 +2,6 @@
 
 namespace Klkvsk\DtoGenerator\Generator\Builder\Class;
 
-use Klkvsk\DtoGenerator\Exception\GeneratorException;
-use Klkvsk\DtoGenerator\Generator\CodeStyle;
-use Klkvsk\DtoGenerator\Generator\ClosurePrinter;
 use Klkvsk\DtoGenerator\Schema\Dto;
 use Klkvsk\DtoGenerator\Schema\Types\ListType;
 use Nette\PhpGenerator\ClassLike;
@@ -146,7 +143,7 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
         }
 
         $constructorParameters = $constructor->getParameters();
-        usort($constructorParameters, fn (Parameter $a, Parameter $b) => $a->isNullable() <=> $b->isNullable());
+        usort($constructorParameters, fn (Parameter $a, Parameter $b) => $a->hasDefaultValue() <=> $b->hasDefaultValue());
         $constructor->setParameters($constructorParameters);
     }
 

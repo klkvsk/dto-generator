@@ -7,32 +7,32 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * This class is auto-generated with klkvsk/dto-generator
  * Do not modify it, any changes might be overwritten!
  *
- * @see project://example/dto.schema.php (line 52)
+ * @see project://example/dto.schema.php
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
  */
 class ScienceBook extends Book implements \JsonSerializable
 {
-    /** @var list<ScienceBook> $references */
+    /** @var array<ScienceBook> $references */
     protected array $references;
 
     public function __construct(
         int $id,
         string $title,
         Author $author,
-        array $genres = [],
-        array $references = [],
         ?\DateTimeInterface $released = null,
-        ?int $rating = 5
+        ?int $rating = 5,
+        array $genres = [],
+        array $references = []
     ) {
-        parent::__construct($id, $title, $author, $genres, $released, $rating);
+        parent::__construct($id, $title, $author, $released, $rating, $genres);
         (function(ScienceBook ...$_) {})( ...$references);
         $this->references = $references;
     }
 
     /**
-     * @return list<ScienceBook>
+     * @return array<ScienceBook>
      */
     public function getReferences(): array
     {
@@ -56,7 +56,7 @@ class ScienceBook extends Book implements \JsonSerializable
     }
 
     /**
-     * @return callable[]
+     * @return iterable<int,\Closure>
      */
     protected static function importers(string $key): iterable
     {
@@ -101,13 +101,13 @@ class ScienceBook extends Book implements \JsonSerializable
 
         // create
         return new static(
-            $constructorParams["id"] ?? null,
-            $constructorParams["title"] ?? null,
-            $constructorParams["author"] ?? null,
-            $constructorParams["genres"] ?? [],
-            $constructorParams["references"] ?? [],
+            $constructorParams["id"],
+            $constructorParams["title"],
+            $constructorParams["author"],
             $constructorParams["released"] ?? null,
-            $constructorParams["rating"] ?? 5
+            $constructorParams["rating"] ?? true,
+            $constructorParams["genres"],
+            $constructorParams["references"]
         );
     }
 

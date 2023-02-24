@@ -237,12 +237,7 @@ class DtoGenerator implements LoggerAwareInterface
                     throw new GeneratorException();
                 }
                 $pathRelativeToRoot = substr($o->declaredInFile, strlen($rootDir) + 1);
-
-                $doc .= "\n@see project://$pathRelativeToRoot";
-                if ($o->declaredAtLine) {
-                    $doc .= " (line $o->declaredAtLine)";
-                }
-                $doc .= "\n";
+                $doc .= "\n@see project://$pathRelativeToRoot\n";
             }
         } catch (Throwable $e) {
             $this->logger->warning($e->getMessage());

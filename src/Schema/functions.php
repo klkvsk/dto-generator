@@ -17,10 +17,10 @@ function enum(string $name, array $cases, EnumValues $enumKeys = EnumValues::AUT
 
 /**
  * @param string $name
+ * @param null|string $extends
+ * @param list<string> $implements
+ * @param list<string> $uses
  * @param iterable<Field> $fields
- * @param list<class-string> $implements
- * @param null|class-string $extends
- * @param list<class-string> $uses
  */
 function object(
     string $name,

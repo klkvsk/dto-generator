@@ -37,7 +37,7 @@ class ImportersMethodBuilder implements ClassMembersBuilderInterface
         $method
             ->setProtected()
             ->setStatic()
-            ->addComment('@return callable[]')
+            ->addComment('@return iterable<int,\Closure>')
             ->setReturnType('iterable')
             ->addBody(CodeStyle::indent($body));
 

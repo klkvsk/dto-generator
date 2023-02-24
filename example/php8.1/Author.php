@@ -7,7 +7,7 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * This class is auto-generated with klkvsk/dto-generator
  * Do not modify it, any changes might be overwritten!
  *
- * @see project://example/dto.schema.php (line 25)
+ * @see project://example/dto.schema.php
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
@@ -19,12 +19,12 @@ class Author implements \JsonSerializable
         public readonly string $firstName,
         public readonly ?string $lastName = null
     ) {
-        $this->validate(['lastName' => ['tooShort' => fn ($x) => \strlen($x) > 5, 'tooLong' => fn ($x) => \strlen($x) < 40]]);
+        $this->validate([['lastName' => ['tooShort' => fn ($x) => \strlen($x) > 5, 'tooLong' => fn ($x) => \strlen($x) < 40]]]);
     }
 
     protected function validate(array $rules): void
     {
-        array_walk($rules, fn(&$vs, $f) => array_walk($vs, fn(&$v) => $v = !call_user_func($v, $this->{$f})));
+        array_walk($rules, fn(&$vs, $f) => array_walk($vs, fn(&$v) => $v = false === call_user_func($v, $this->{$f})));
         $failedRules = array_filter(array_map(fn($r) => array_keys(array_filter($r)), $rules));
         if ($failedRules) throw new \InvalidArgumentException(json_encode($failedRules));
     }
@@ -35,7 +35,7 @@ class Author implements \JsonSerializable
     }
 
     /**
-     * @return callable[]
+     * @return iterable<int,\Closure>
      */
     protected static function importers(string $key): iterable
     {
