@@ -89,7 +89,11 @@ class EnumLegacyBuilder implements EnumBuilderInterface
 
         $class->addImplement('\\JsonSerializable');
         $class->addMethod('jsonSerialize')
-            ->addAttribute('ReturnTypeWillChange')
+            ->setReturnType('array')
+            ->addBody('return $this->value;');
+
+        $class->addMethod('__toString')
+            ->setPublic()
             ->addBody('return $this->value;');
 
         return $class;

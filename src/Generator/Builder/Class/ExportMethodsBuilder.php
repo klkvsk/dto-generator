@@ -48,9 +48,10 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
             $class->addImplement('\\JsonSerializable');
             $jsonSerializeMethod = $class->addMethod('jsonSerialize')
                 ->setPublic()
+                ->setReturnType('array')
                 ->addBody('$array = [];')
                 ->addBody('foreach (get_mangled_object_vars($this) as $var => $value) {')
-                ->addBody('    $var = preg_replace("/.+\0/", "", $var);');
+                ->addBody('    $var = substr($var, strrpos($var, "\\0") ?: 0);');
 
             if ($this->dateFormat) {
                 $jsonSerializeMethod
@@ -65,8 +66,7 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
                 ->addBody('    }')
                 ->addBody('    $array[$var] = $value;')
                 ->addBody('}')
-                ->addBody('return $array;')
-                ->addAttribute('ReturnTypeWillChange');
+                ->addBody('return $array;');
         }
     }
 }
