@@ -46,7 +46,11 @@ class ValidationBuilder implements ClassMembersBuilderInterface
         $this->buildMethod($class);
 
         $constructor = $class->getMethod('__construct');
-        $constructor->addBody(CodeStyle::indent((new Dumper())->format('$this->validate(?);', [ $rules ])));
+        $constructor->addBody(
+            CodeStyle::indent(
+                (new Dumper())->format('$this->validate(?);', $rules)
+            )
+        );
     }
 
     public function buildMethod(ClassType $class)
