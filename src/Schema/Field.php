@@ -29,7 +29,7 @@ class Field
 
     public function isNullable(): bool
     {
-        return ! ($this->required || $this->type instanceof ListType);
+        return $this->required === false;
     }
 
     public function withObject(Dto $object): static
