@@ -67,7 +67,8 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
             if ($field->type instanceof ListType && $this->withListTypeChecks) {
                 $constructor->addBody(
                     sprintf(
-                        '(function(%s ...$_) {})( ...%s);',
+                        '%s && (function(%s ...$_) {})( ...%s);',
+                        "$$field->name",
                         $ns->simplifyType($field->type->elementType->buildTypeId($object->schema)),
                         "$$field->name"
                     )
