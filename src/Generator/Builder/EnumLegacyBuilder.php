@@ -32,7 +32,7 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             ->setComment('@return static[]')
             ->setStatic()
             ->setPublic()
-            ->setReturnType('array');
+            ->setReturnType($enum->backedType);
 
         $class
             ->addMethod('name')
