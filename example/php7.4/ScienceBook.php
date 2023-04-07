@@ -11,8 +11,6 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
- *
- * ---
  */
 class ScienceBook extends Book implements \JsonSerializable
 {

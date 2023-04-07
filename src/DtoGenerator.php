@@ -226,7 +226,9 @@ class DtoGenerator implements LoggerAwareInterface
         }
 
         $originalComment = $class->getComment();
-        $comment .= "\n---\n\n$originalComment";
+        if ($originalComment) {
+            $comment .= "\n---\n\n$originalComment";
+        }
         $class->setComment($comment);
     }
 
