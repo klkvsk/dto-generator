@@ -76,13 +76,18 @@ class Author implements \JsonSerializable
     public function toArray(): array
     {
         $array = [];
-        foreach (get_mangled_object_vars($this) as $var => $value) {
-            $var = preg_replace("/.+\0/", "", $var);
+        foreach (get_object_vars($this) as $var => $value) {
             if ($value instanceof \DateTimeInterface) {
                 $value = $value->format('Y-m-d\TH:i:sP');
             }
             if (is_object($value) && method_exists($value, 'toArray')) {
                 $value = $value->toArray();
+            }
+            if (class_exists(\UnitEnum::class) && $value instanceof \UnitEnum) {
+                $value = $value->value;
+            }
+            if (is_object($value) && method_exists($value, "__toString")) {
+                $value = (string)$value;
             }
             $array[$var] = $value;
         }
@@ -92,13 +97,18 @@ class Author implements \JsonSerializable
     public function jsonSerialize(): array
     {
         $array = [];
-        foreach (get_mangled_object_vars($this) as $var => $value) {
-            $var = substr($var, strrpos($var, "\0") ?: 0);
+        foreach (get_object_vars($this) as $var => $value) {
             if ($value instanceof \DateTimeInterface) {
                 $value = $value->format('Y-m-d\TH:i:sP');
             }
             if ($value instanceof \JsonSerializable) {
                 $value = $value->jsonSerialize();
+            }
+            if (class_exists(\UnitEnum::class) && $value instanceof \UnitEnum) {
+                $value = $value->value;
+            }
+            if (is_object($value) && method_exists($value, "__toString")) {
+                $value = (string)$value;
             }
             $array[$var] = $value;
         }

@@ -24,8 +24,7 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
             $toArrayMethod = $class->addMethod('toArray')
                 ->setPublic()
                 ->addBody('$array = [];')
-                ->addBody('foreach (get_mangled_object_vars($this) as $var => $value) {')
-                ->addBody('    $var = preg_replace("/.+\0/", "", $var);');
+                ->addBody('foreach (get_object_vars($this) as $var => $value) {');
 
             if ($this->dateFormat) {
                 $toArrayMethod
@@ -37,6 +36,12 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
             $toArrayMethod
                 ->addBody('    if (is_object($value) && method_exists($value, ?)) {', [self::TO_ARRAY_METHOD_NAME])
                 ->addBody('        $value = $value->?();', [self::TO_ARRAY_METHOD_NAME])
+                ->addBody('    }')
+                ->addBody('    if (class_exists(\\UnitEnum::class) && $value instanceof \\UnitEnum) {')
+                ->addBody('        $value = $value->value;')
+                ->addBody('    }')
+                ->addBody('    if (is_object($value) && method_exists($value, "__toString")) {')
+                ->addBody('        $value = (string)$value;')
                 ->addBody('    }')
                 ->addBody('    $array[$var] = $value;')
                 ->addBody('}')
@@ -50,8 +55,7 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
                 ->setPublic()
                 ->setReturnType('array')
                 ->addBody('$array = [];')
-                ->addBody('foreach (get_mangled_object_vars($this) as $var => $value) {')
-                ->addBody('    $var = substr($var, strrpos($var, "\\0") ?: 0);');
+                ->addBody('foreach (get_object_vars($this) as $var => $value) {');
 
             if ($this->dateFormat) {
                 $jsonSerializeMethod
@@ -64,10 +68,15 @@ class ExportMethodsBuilder implements ClassMembersBuilderInterface
                 ->addBody('    if ($value instanceof \\JsonSerializable) {')
                 ->addBody('        $value = $value->jsonSerialize();')
                 ->addBody('    }')
+                ->addBody('    if (class_exists(\\UnitEnum::class) && $value instanceof \\UnitEnum) {')
+                ->addBody('        $value = $value->value;')
+                ->addBody('    }')
+                ->addBody('    if (is_object($value) && method_exists($value, "__toString")) {')
+                ->addBody('        $value = (string)$value;')
+                ->addBody('    }')
                 ->addBody('    $array[$var] = $value;')
                 ->addBody('}')
                 ->addBody('return $array;');
         }
     }
 }
-
