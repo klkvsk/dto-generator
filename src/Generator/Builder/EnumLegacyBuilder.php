@@ -61,15 +61,15 @@ class EnumLegacyBuilder implements EnumBuilderInterface
 
         $class
             ->addMethod('__get')
-            ->setParameters([ new Parameter('propertyName') ])
+            ->setParameters([ new Parameter('name') ])
             ->setPublic()
-            ->addBody('switch ($propertyName) {')
+            ->addBody('switch ($name) {')
             ->addBody('    case "name":')
             ->addBody('        return $this->name;')
             ->addBody('    case "value":')
             ->addBody('        return $this->value;')
             ->addBody('    default:')
-            ->addBody('        trigger_error("Undefined property: ' . $enum->getShortName() . '::$propertyName");')
+            ->addBody('        trigger_error("Undefined property: ' . $enum->getShortName() . '::$name", E_USER_WARNING);')
             ->addBody('        return null;')
             ->addBody('}');
 
@@ -81,7 +81,7 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             ->addBody('$instance = self::$instances[$name] ?? null;')
             ->addBody('if ($instance === null) {')
             ->addBody('    if (!array_key_exists($name, self::$cases)) {')
-            ->addBody('        throw new \ValueError("unknown case \'$name\'");')
+            ->addBody('        throw new \ValueError("unknown case ?");', [ new Literal("'{$enum->getShortName()}::\$name'") ])
             ->addBody('    }')
             ->addBody('    self::$instances[$name] = $instance = new self($name, self::$cases[$name]);')
             ->addBody('}')

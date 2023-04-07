@@ -54,15 +54,15 @@ final class Genre implements \JsonSerializable
         return [self::ROMANCE(), self::COMEDY(), self::DRAMA(), self::NON_FICTION(), self::SCIENTIFIC_WORK()];
     }
 
-    public function __get($propertyName)
+    public function __get($name)
     {
-        switch ($propertyName) {
+        switch ($name) {
             case "name":
                 return $this->name;
             case "value":
                 return $this->value;
             default:
-                trigger_error("Undefined property: Genre::$propertyName");
+                trigger_error("Undefined property: Genre::$name", E_USER_WARNING);
                 return null;
         }
     }
@@ -72,7 +72,7 @@ final class Genre implements \JsonSerializable
         $instance = self::$instances[$name] ?? null;
         if ($instance === null) {
             if (!array_key_exists($name, self::$cases)) {
-                throw new \ValueError("unknown case '$name'");
+                throw new \ValueError("unknown case 'Genre::$name'");
             }
             self::$instances[$name] = $instance = new self($name, self::$cases[$name]);
         }
