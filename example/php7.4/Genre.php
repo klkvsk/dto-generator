@@ -14,12 +14,29 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * ---
  *
+ * Readonly properties:
  * @property-read string $name
  * @property-read string $value
+ *
+ * Cases:
+ * @method static Genre ROMANCE
+ * @method static Genre COMEDY
+ * @method static Genre DRAMA
+ * @method static Genre NON_FICTION
+ * @method static Genre SCIENTIFIC_WORK
  */
 final class Genre implements \JsonSerializable
 {
-    private static ?array $map;
+    private static array $instances = [];
+
+    private static array $cases = [
+        'ROMANCE' => 'romance',
+        'COMEDY' => 'comedy',
+        'DRAMA' => 'drama',
+        'NON_FICTION' => 'non-fiction',
+        'SCIENTIFIC_WORK' => 'scientific-work',
+    ];
+
     private string $name;
     private string $value;
 
@@ -34,13 +51,7 @@ final class Genre implements \JsonSerializable
      */
     public static function cases(): array
     {
-        return self::$map = self::$map ?? [
-            new self('ROMANCE', 'romance'),
-            new self('COMEDY', 'comedy'),
-            new self('DRAMA', 'drama'),
-            new self('NON_FICTION', 'non-fiction'),
-            new self('SCIENTIFIC_WORK', 'scientific-work'),
-        ];
+        return [self::ROMANCE(), self::COMEDY(), self::DRAMA(), self::NON_FICTION(), self::SCIENTIFIC_WORK()];
     }
 
     public function __get($propertyName)
@@ -56,10 +67,22 @@ final class Genre implements \JsonSerializable
         }
     }
 
+    public static function __callStatic($name, $args)
+    {
+        $instance = self::$instances[$name] ?? null;
+        if ($instance === null) {
+            if (!array_key_exists($name, self::$cases)) {
+                throw new \ValueError("unknown case '$name'");
+            }
+            self::$instances[$name] = $instance = new self($name, self::$cases[$name]);
+        }
+        return $instance;
+    }
+
     public static function tryFrom(string $value): ?self
     {
-        $cases = self::cases();
-        return $cases[$value] ?? null;
+        $case = array_search($value, self::$cases, true);
+        return $case ? self::$case() : null;
     }
 
     public static function from(string $value): self
@@ -72,31 +95,6 @@ final class Genre implements \JsonSerializable
             ));
         }
         return $case;
-    }
-
-    public static function ROMANCE(): self
-    {
-        return self::from('romance');
-    }
-
-    public static function COMEDY(): self
-    {
-        return self::from('comedy');
-    }
-
-    public static function DRAMA(): self
-    {
-        return self::from('drama');
-    }
-
-    public static function NON_FICTION(): self
-    {
-        return self::from('non-fiction');
-    }
-
-    public static function SCIENTIFIC_WORK(): self
-    {
-        return self::from('scientific-work');
     }
 
     public function jsonSerialize(): string

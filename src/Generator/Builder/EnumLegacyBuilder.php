@@ -16,14 +16,24 @@ class EnumLegacyBuilder implements EnumBuilderInterface
         $class = $ns->addClass($enum->getShortName())->setFinal();
 
         $class
+            ->addComment('Readonly properties:')
             ->addComment("@property-read string \$name")
-            ->addComment("@property-read {$enum->getBackedType()} \$value");
+            ->addComment("@property-read {$enum->getBackedType()} \$value")
+            ->addComment("")
+            ->addComment("Cases:");
 
-        $class->addProperty('map')
+
+        $class->addProperty('instances')
             ->setStatic()
             ->setPrivate()
-            ->setNullable()
-            ->setType('array');
+            ->setType('array')
+            ->setValue([]);
+
+        $class->addProperty('cases')
+            ->setStatic()
+            ->setPrivate()
+            ->setType('array')
+            ->setValue($enum->getCases());
 
         $class->addProperty('name')
             ->setPrivate()
@@ -63,7 +73,20 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             ->addBody('        return null;')
             ->addBody('}');
 
-        // ::tryFrom(value)
+        $class
+            ->addMethod('__callStatic')
+            ->setParameters([ new Parameter('name'), new Parameter('args') ])
+            ->setStatic()
+            ->setPublic()
+            ->addBody('$instance = self::$instances[$name] ?? null;')
+            ->addBody('if ($instance === null) {')
+            ->addBody('    if (!array_key_exists($name, self::$cases)) {')
+            ->addBody('        throw new \ValueError("unknown case \'$name\'");')
+            ->addBody('    }')
+            ->addBody('    self::$instances[$name] = $instance = new self($name, self::$cases[$name]);')
+            ->addBody('}')
+            ->addBody('return $instance;');
+
         $class->addMethod('tryFrom')
             ->setStatic()
             ->setPublic()
@@ -72,10 +95,9 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             ->setParameters([
                 (new Parameter('value'))->setType($enum->getBackedType())
             ])
-            ->addBody('$cases = self::cases();')
-            ->addBody('return $cases[$value] ?? null;');
+            ->addBody('$case = array_search($value, self::$cases, true);')
+            ->addBody('return $case ? self::$case() : null;');
 
-        // ::from($value)
         $class->addMethod('from')
             ->setStatic()
             ->setPublic()
@@ -94,16 +116,11 @@ class EnumLegacyBuilder implements EnumBuilderInterface
 
         $casesMap = [];
         foreach ($enum->getCases() as $case => $value) {
-            $class->addMethod($case)
-                ->setStatic()
-                ->setPublic()
-                ->setReturnType('self')
-                ->addBody('return self::from(?);', [$value]);
-
-            $casesMap[] = new Literal('new self(?, ?)', [$case, $value]);
+            $class->addComment("@method static {$enum->getShortName()} $case");
+            $casesMap[] = new Literal("self::$case()");
         }
 
-        $casesMethod->addBody('return self::$map = self::$map \?\? ?;', [$casesMap]);
+        $casesMethod->addBody('return ?;', [$casesMap]);
 
         $class->addImplement('\\JsonSerializable');
         $class->addMethod('jsonSerialize')
