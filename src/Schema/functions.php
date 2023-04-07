@@ -10,9 +10,9 @@ function schema(?string $namespace = null, ?string $outputDir = null, array $obj
     return new Schema($namespace, $outputDir, $objects);
 }
 
-function enum(string $name, array $cases, EnumValues $enumKeys = EnumValues::AUTO, ?string $backedType = null): Enum
+function enum(string $name, array $cases): Enum
 {
-    return new Enum($name, $cases, $enumKeys, $backedType);
+    return new Enum($name, $cases);
 }
 
 /**

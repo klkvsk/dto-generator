@@ -6,6 +6,7 @@ use Klkvsk\DtoGenerator\Schema\Enum;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\EnumType;
 use Nette\PhpGenerator\Literal;
+use Nette\PhpGenerator\Parameter;
 use Nette\PhpGenerator\PhpNamespace;
 
 class EnumLegacyBuilder implements EnumBuilderInterface
@@ -14,16 +15,30 @@ class EnumLegacyBuilder implements EnumBuilderInterface
     {
         $class = $ns->addClass($enum->getShortName())->setFinal();
 
-        $class->addProperty('map')->setType('array')->setStatic()->setNullable();
-        $class->addProperty('name')->setType('string');
-        $class->addProperty('value')->setType($enum->backedType);
+        $class
+            ->addComment("@property-read string \$name")
+            ->addComment("@property-read {$enum->getBackedType()} \$value");
+
+        $class->addProperty('map')
+            ->setStatic()
+            ->setPrivate()
+            ->setNullable()
+            ->setType('array');
+
+        $class->addProperty('name')
+            ->setPrivate()
+            ->setType('string');
+
+        $class->addProperty('value')
+            ->setPrivate()
+            ->setType($enum->getBackedType());
 
         $enumCtor = $class->addMethod('__construct')
             ->setPrivate();
         $enumCtor->addParameter('name')
             ->setType('string');
         $enumCtor->addParameter('value')
-            ->setType($enum->backedType);
+            ->setType($enum->getBackedType());
         $enumCtor
             ->addBody('$this->name = $name;')
             ->addBody('$this->value = $value;');
@@ -32,35 +47,42 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             ->setComment('@return static[]')
             ->setStatic()
             ->setPublic()
-            ->setReturnType($enum->backedType);
+            ->setReturnType('array');
 
         $class
-            ->addMethod('name')
+            ->addMethod('__get')
+            ->setParameters([ new Parameter('propertyName') ])
             ->setPublic()
-            ->setReturnType('string')
-            ->setBody('return $this->name;');
-        $class
-            ->addMethod('value')
-            ->setPublic()
-            ->setReturnType($enum->backedType)
-            ->setBody('return $this->value;');
-        $tryFromMethod = $class
-            ->addMethod('tryFrom')
+            ->addBody('switch ($propertyName) {')
+            ->addBody('    case "name":')
+            ->addBody('        return $this->name;')
+            ->addBody('    case "value":')
+            ->addBody('        return $this->value;')
+            ->addBody('    default:')
+            ->addBody('        trigger_error("Undefined property: ' . $enum->getShortName() . '::$propertyName");')
+            ->addBody('        return null;')
+            ->addBody('}');
+
+        // ::tryFrom(value)
+        $class->addMethod('tryFrom')
             ->setStatic()
             ->setPublic()
             ->setReturnType('self')
             ->setReturnNullable()
+            ->setParameters([
+                (new Parameter('value'))->setType($enum->getBackedType())
+            ])
             ->addBody('$cases = self::cases();')
             ->addBody('return $cases[$value] ?? null;');
-        $tryFromMethod
-            ->addParameter('value')
-            ->setType($enum->backedType);
 
-        $fromMethod = $class
-            ->addMethod('from')
+        // ::from($value)
+        $class->addMethod('from')
             ->setStatic()
             ->setPublic()
             ->setReturnType('self')
+            ->setParameters([
+                (new Parameter('value'))->setType($enum->getBackedType())
+            ])
             ->addBody('$case = self::tryFrom($value);')
             ->addBody('if (!$case) {')
             ->addBody('    throw new \ValueError(sprintf(')
@@ -70,26 +92,22 @@ class EnumLegacyBuilder implements EnumBuilderInterface
             ->addBody('}')
             ->addBody('return $case;');
 
-        $fromMethod
-            ->addParameter('value')
-            ->setType($enum->backedType);
-
         $casesMap = [];
-        foreach ($enum->cases as $value => $case) {
+        foreach ($enum->getCases() as $case => $value) {
             $class->addMethod($case)
                 ->setStatic()
                 ->setPublic()
                 ->setReturnType('self')
                 ->addBody('return self::from(?);', [$value]);
 
-            $casesMap[$value] = new Literal('new self(?, ?)', [$case, $value]);
+            $casesMap[] = new Literal('new self(?, ?)', [$case, $value]);
         }
 
         $casesMethod->addBody('return self::$map = self::$map \?\? ?;', [$casesMap]);
 
         $class->addImplement('\\JsonSerializable');
         $class->addMethod('jsonSerialize')
-            ->setReturnType('array')
+            ->setReturnType($enum->getBackedType())
             ->addBody('return $this->value;');
 
         $class->addMethod('__toString')

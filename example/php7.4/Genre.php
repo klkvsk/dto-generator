@@ -11,14 +11,19 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
+ *
+ * ---
+ *
+ * @property-read string $name
+ * @property-read string $value
  */
 final class Genre implements \JsonSerializable
 {
-    public static ?array $map;
-    public string $name;
-    public $value;
+    private static ?array $map;
+    private string $name;
+    private string $value;
 
-    private function __construct(string $name, $value)
+    private function __construct(string $name, string $value)
     {
         $this->name = $name;
         $this->value = $value;
@@ -30,31 +35,34 @@ final class Genre implements \JsonSerializable
     public static function cases(): array
     {
         return self::$map = self::$map ?? [
-            'romance' => new self('ROMANCE', 'romance'),
-            'comedy' => new self('COMEDY', 'comedy'),
-            'drama' => new self('DRAMA', 'drama'),
-            'non-fiction' => new self('NON_FICTION', 'non-fiction'),
-            'scientific-work' => new self('SCIENTIFIC_WORK', 'scientific-work'),
+            new self('ROMANCE', 'romance'),
+            new self('COMEDY', 'comedy'),
+            new self('DRAMA', 'drama'),
+            new self('NON_FICTION', 'non-fiction'),
+            new self('SCIENTIFIC_WORK', 'scientific-work'),
         ];
     }
 
-    public function name(): string
+    public function __get($propertyName)
     {
-        return $this->name;
+        switch ($propertyName) {
+            case "name":
+                return $this->name;
+            case "value":
+                return $this->value;
+            default:
+                trigger_error("Undefined property: Genre::$propertyName");
+                return null;
+        }
     }
 
-    public function value()
-    {
-        return $this->value;
-    }
-
-    public static function tryFrom($value): ?self
+    public static function tryFrom(string $value): ?self
     {
         $cases = self::cases();
         return $cases[$value] ?? null;
     }
 
-    public static function from($value): self
+    public static function from(string $value): self
     {
         $case = self::tryFrom($value);
         if (!$case) {
@@ -91,8 +99,12 @@ final class Genre implements \JsonSerializable
         return self::from('scientific-work');
     }
 
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): string
+    {
+        return $this->value;
+    }
+
+    public function __toString()
     {
         return $this->value;
     }

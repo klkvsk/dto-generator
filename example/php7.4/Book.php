@@ -11,6 +11,8 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
+ *
+ * ---
  */
 class Book implements \JsonSerializable
 {
@@ -20,8 +22,8 @@ class Book implements \JsonSerializable
     protected Author $author;
     protected ?int $rating;
 
-    /** @var array<Genre> $genres */
-    protected array $genres;
+    /** @var ?array<Genre> $genres */
+    protected ?array $genres;
 
     public function __construct(
         int $id,
@@ -29,14 +31,14 @@ class Book implements \JsonSerializable
         Author $author,
         ?\DateTimeInterface $released = null,
         ?int $rating = 5,
-        array $genres = []
+        ?array $genres = []
     ) {
         $this->id = $id;
         $this->title = $title;
         $this->released = $released;
         $this->author = $author;
         $this->rating = $rating;
-        (function(Genre ...$_) {})( ...$genres);
+        $genres && (function(Genre ...$_) {})( ...$genres);
         $this->genres = $genres;
     }
 
@@ -66,9 +68,9 @@ class Book implements \JsonSerializable
     }
 
     /**
-     * @return array<Genre>
+     * @return ?array<Genre>
      */
-    public function getGenres(): array
+    public function getGenres(): ?array
     {
         return $this->genres;
     }
@@ -140,13 +142,14 @@ class Book implements \JsonSerializable
         }
 
         // create
+        /** @psalm-suppress PossiblyNullArgument */
         return new static(
             $constructorParams["id"],
             $constructorParams["title"],
             $constructorParams["author"],
             $constructorParams["released"] ?? null,
             $constructorParams["rating"] ?? true,
-            $constructorParams["genres"]
+            $constructorParams["genres"] ?? null
         );
     }
 
@@ -166,12 +169,11 @@ class Book implements \JsonSerializable
         return $array;
     }
 
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
-            $var = preg_replace("/.+\0/", "", $var);
+            $var = substr($var, strrpos($var, "\0") ?: 0);
             if ($value instanceof \DateTimeInterface) {
                 $value = $value->format('Y-m-d\TH:i:sP');
             }

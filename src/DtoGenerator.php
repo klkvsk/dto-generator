@@ -205,7 +205,7 @@ class DtoGenerator implements LoggerAwareInterface
             $nsName = $enum->getNamespace();
             $ns = $namespaces[$nsName] ??= new PhpNamespace($nsName);
             $class = $this->enumBuilder->build($enum, $ns);
-            $class->addComment($this->buildComment($enum));
+            $this->prependComment($class, $this->buildComment($enum));
         }
 
         foreach ($schema->dtos as $dto) {
@@ -213,10 +213,21 @@ class DtoGenerator implements LoggerAwareInterface
             $nsName = $dto->getNamespace();
             $ns = $namespaces[$nsName] ??= new PhpNamespace($nsName);
             $class = $this->classBuilder->build($dto, $ns);
-            $class->addComment($this->buildComment($dto));
+            $this->prependComment($class, $this->buildComment($dto));
         }
 
         return $namespaces;
+    }
+
+    protected function prependComment(ClassType|EnumType $class, string $comment): void
+    {
+        if (empty($comment)) {
+            return;
+        }
+
+        $originalComment = $class->getComment();
+        $comment .= "\n---\n\n$originalComment";
+        $class->setComment($comment);
     }
 
     protected function buildComment(AbstractObject $o): string

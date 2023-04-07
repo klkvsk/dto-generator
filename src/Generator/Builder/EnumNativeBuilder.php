@@ -12,9 +12,9 @@ class EnumNativeBuilder implements EnumBuilderInterface
     public function build(Enum $enum, PhpNamespace $ns): EnumType|ClassType
     {
         $class = $ns->addEnum($enum->getShortName())
-            ->setType($enum->backedType);
+            ->setType($enum->getBackedType());
 
-        foreach ($enum->cases as $value => $case) {
+        foreach ($enum->getCases() as $case => $value) {
             $class->addCase($case, $value);
         }
 

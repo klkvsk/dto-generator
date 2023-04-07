@@ -11,12 +11,14 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
+ *
+ * ---
  */
 class ScienceBook extends Book implements \JsonSerializable
 {
     /**
-     * @param array<Genre> $genres
-     * @param array<ScienceBook> $references
+     * @param ?array<Genre> $genres
+     * @param ?array<ScienceBook> $references
      */
     public function __construct(
         int $id,
@@ -24,11 +26,11 @@ class ScienceBook extends Book implements \JsonSerializable
         Author $author,
         ?\DateTimeInterface $released = null,
         ?int $rating = 5,
-        array $genres = [],
-        public readonly array $references = []
+        ?array $genres = [],
+        public readonly ?array $references = []
     ) {
         parent::__construct($id, $title, $author, $released, $rating, $genres);
-        (function(ScienceBook ...$_) {})( ...$references);
+        $references && (function(ScienceBook ...$_) {})( ...$references);
     }
 
     protected static function defaults(): array
@@ -88,6 +90,7 @@ class ScienceBook extends Book implements \JsonSerializable
         }
 
         // create
+        /** @psalm-suppress PossiblyNullArgument */
         return new static(...$constructorParams);
     }
 
@@ -107,12 +110,11 @@ class ScienceBook extends Book implements \JsonSerializable
         return $array;
     }
 
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
-            $var = preg_replace("/.+\0/", "", $var);
+            $var = substr($var, strrpos($var, "\0") ?: 0);
             if ($value instanceof \DateTimeInterface) {
                 $value = $value->format('Y-m-d\TH:i:sP');
             }

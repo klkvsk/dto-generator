@@ -11,11 +11,13 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
+ *
+ * ---
  */
 class Book implements \JsonSerializable
 {
     /**
-     * @param array<Genre> $genres
+     * @param ?array<Genre> $genres
      */
     public function __construct(
         public readonly int $id,
@@ -23,9 +25,9 @@ class Book implements \JsonSerializable
         public readonly Author $author,
         public readonly ?\DateTimeInterface $released = null,
         public readonly ?int $rating = 5,
-        public readonly array $genres = []
+        public readonly ?array $genres = []
     ) {
-        (function(Genre ...$_) {})( ...$genres);
+        $genres && (function(Genre ...$_) {})( ...$genres);
     }
 
     protected static function defaults(): array
@@ -85,6 +87,7 @@ class Book implements \JsonSerializable
         }
 
         // create
+        /** @psalm-suppress PossiblyNullArgument */
         return new static(...$constructorParams);
     }
 
@@ -104,12 +107,11 @@ class Book implements \JsonSerializable
         return $array;
     }
 
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
-            $var = preg_replace("/.+\0/", "", $var);
+            $var = substr($var, strrpos($var, "\0") ?: 0);
             if ($value instanceof \DateTimeInterface) {
                 $value = $value->format('Y-m-d\TH:i:sP');
             }

@@ -11,6 +11,8 @@ namespace Klkvsk\DtoGenerator\Example\One;
  *
  * @link https://github.com/klkvsk/dto-generator
  * @link https://packagist.org/klkvsk/dto-generator
+ *
+ * ---
  */
 class Author implements \JsonSerializable
 {
@@ -19,7 +21,7 @@ class Author implements \JsonSerializable
         protected string $firstName,
         protected ?string $lastName = null
     ) {
-        $this->validate([['lastName' => ['tooShort' => fn ($x) => \strlen($x) > 5, 'tooLong' => fn ($x) => \strlen($x) < 40]]]);
+        $this->validate(['lastName' => ['tooShort' => fn ($x) => \strlen($x) > 5, 'tooLong' => fn ($x) => \strlen($x) < 40]]);
     }
 
     public function getId(): int
@@ -84,6 +86,7 @@ class Author implements \JsonSerializable
         }
 
         // create
+        /** @psalm-suppress PossiblyNullArgument */
         return new static(...$constructorParams);
     }
 
@@ -103,12 +106,11 @@ class Author implements \JsonSerializable
         return $array;
     }
 
-    #[\ReturnTypeWillChange]
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $array = [];
         foreach (get_mangled_object_vars($this) as $var => $value) {
-            $var = preg_replace("/.+\0/", "", $var);
+            $var = substr($var, strrpos($var, "\0") ?: 0);
             if ($value instanceof \DateTimeInterface) {
                 $value = $value->format('Y-m-d\TH:i:sP');
             }
