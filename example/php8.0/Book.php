@@ -21,6 +21,7 @@ class Book implements \JsonSerializable
         protected int $id,
         protected string $title,
         protected Author $author,
+        #[\JetBrains\PhpStorm\Deprecated(reason: 'deprecation notice test')]
         protected ?\DateTimeInterface $released = null,
         protected ?int $rating = 5,
         protected ?array $genres = []
@@ -38,6 +39,9 @@ class Book implements \JsonSerializable
         return $this->title;
     }
 
+    /**
+     * @deprecated deprecation notice test
+     */
     public function getReleased(): ?\DateTimeInterface
     {
         return $this->released;

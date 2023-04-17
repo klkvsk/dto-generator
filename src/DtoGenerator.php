@@ -29,7 +29,6 @@ use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\EnumType;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\Printer;
-use Nette\PhpGenerator\PsrPrinter;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
@@ -64,7 +63,19 @@ class DtoGenerator implements LoggerAwareInterface
 
     public function __construct()
     {
-        $this->printer = new PsrPrinter();
+        // own psr printer
+        $this->printer = new class() extends Printer {
+            public string $indentation = '    ';
+            public int $linesBetweenMethods = 1;
+            public int $linesBetweenUseTypes = 1;
+
+            // never inline attributes
+            protected function printAttributes(array $attrs, bool $inline = false): string
+            {
+                return parent::printAttributes($attrs, false);
+            }
+        };
+
         $this->logger = new NullLogger();
 
         $this->classBuilder = new ClassBuilder();
@@ -78,7 +89,7 @@ class DtoGenerator implements LoggerAwareInterface
                 withPromotedParameters: self::$usePromotedParameters || self::$useReadonlyProperties,
                 withPublicParameters: self::$useReadonlyProperties,
                 withReadonlyParameters: self::$useReadonlyProperties,
-                withGetters: !self::$useReadonlyProperties,
+                withGetters: ! self::$useReadonlyProperties,
                 withListTypeChecks: self::$withListTypeChecks,
             )
         );
@@ -156,8 +167,8 @@ class DtoGenerator implements LoggerAwareInterface
     protected function writeClass(PhpNamespace $ns, ClassLike $class, string $file): void
     {
         $dir = dirname($file);
-        if (!file_exists($dir)) {
-            if (!@mkdir($dir, 0777, true)) {
+        if (! file_exists($dir)) {
+            if (! @mkdir($dir, 0777, true)) {
                 $error = error_get_last();
 
                 throw new GeneratorException("Path '$dir' could not be created: {$error['message']}");
@@ -177,7 +188,7 @@ class DtoGenerator implements LoggerAwareInterface
         $oldCode = file_exists($file) ? file_get_contents($file) : '';
         $diff = $oldCode != $code;
         if ($diff) {
-            if (!@file_put_contents($file, $code)) {
+            if (! @file_put_contents($file, $code)) {
                 $error = error_get_last() ?: ['message' => 'unknown error'];
                 throw new GeneratorException("File '$file is not writable: {$error['message']}");
             }
@@ -234,7 +245,7 @@ class DtoGenerator implements LoggerAwareInterface
 
     protected function buildComment(AbstractObject $o): string
     {
-        if (!static::$withFileComments) {
+        if (! static::$withFileComments) {
             return '';
         }
         $doc = "This class is auto-generated with klkvsk/dto-generator\n"
@@ -246,7 +257,7 @@ class DtoGenerator implements LoggerAwareInterface
                 if ($rootDir === false) {
                     throw new GeneratorException();
                 }
-                if (!str_starts_with($o->declaredInFile, $rootDir)) {
+                if (! str_starts_with($o->declaredInFile, $rootDir)) {
                     throw new GeneratorException();
                 }
                 $pathRelativeToRoot = substr($o->declaredInFile, strlen($rootDir) + 1);

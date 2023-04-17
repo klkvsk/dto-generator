@@ -43,7 +43,7 @@ return dto\schema(
             fields: [
                 dto\field('id', t\int(), required: true),
                 dto\field('title', t\string(), required: true),
-                dto\field('released', t\date()),
+                dto\field('released', t\date(), deprecated: 'deprecation notice test'),
                 dto\field('author', t\object('Author'), required: true),
                 dto\field('rating', t\int(), default: 5),
                 dto\field('genres', t\list_(t\enum('Genre'))),

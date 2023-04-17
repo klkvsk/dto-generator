@@ -21,6 +21,7 @@ class Book implements \JsonSerializable
         public readonly int $id,
         public readonly string $title,
         public readonly Author $author,
+        #[\JetBrains\PhpStorm\Deprecated(reason: 'deprecation notice test')]
         public readonly ?\DateTimeInterface $released = null,
         public readonly ?int $rating = 5,
         public readonly ?array $genres = []

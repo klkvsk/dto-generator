@@ -23,8 +23,7 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
         public readonly bool $withReturnStatic = true,
         public readonly bool $withForcedPhpDoc = false,
         public readonly bool $withFirstClassCallableSyntax = false,
-    )
-    {
+    ) {
     }
 
     public function build(Dto $object, PhpNamespace $ns, ClassType $class): void
@@ -46,7 +45,7 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                     )
                 );
                 $parentConstructorPass = array_map(
-                    fn(Parameter $p) => new Literal("\${$p->getName()}"),
+                    fn (Parameter $p) => new Literal("\${$p->getName()}"),
                     $parentConstructor->getParameters()
                 );
 
@@ -84,6 +83,13 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                 );
                 $parameter->setReadOnly($this->withReadonlyParameters);
 
+                if ($field->deprecated) {
+                    // there is no way to deprecate parameters with `@deprecated` comment :(
+                    $parameter->addAttribute(
+                        'JetBrains\\PhpStorm\\Deprecated',
+                        is_string($field->deprecated) ? [ 'reason' => $field->deprecated ] : [],
+                    );
+                }
                 if ($buildVarDoc) {
                     $constructor->addComment("@param $phpTypeHint \$$field->name");
                 }
@@ -97,6 +103,13 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                         : ClassLike::VisibilityProtected
                 );
                 $property->setReadOnly($this->withReadonlyParameters);
+
+                if ($field->deprecated) {
+                    $property->addComment(
+                        '@deprecated'
+                        . (is_string($field->deprecated) ? ' ' . $field->deprecated : '')
+                    );
+                }
                 if ($buildVarDoc) {
                     $property->addComment("@var $phpTypeHint \$$field->name");
                 }
@@ -120,12 +133,19 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                     ->setReturnType($phpType)
                     ->setBody("return \$this->$field->name;");
 
+                if ($field->deprecated) {
+                    $getter->addComment(
+                        '@deprecated'
+                        . (is_string($field->deprecated) ? ' ' . $field->deprecated : '')
+                    );
+                }
+
                 if ($buildVarDoc) {
                     $getter->addComment("@return $phpTypeHint");
                 }
             }
 
-            if ($this->withSetters && !$this->withReadonlyParameters) {
+            if ($this->withSetters && ! $this->withReadonlyParameters) {
                 $setter = $class->addMethod('set' . ucfirst($field->name))
                     ->setPublic()
                     ->setReturnType($this->withReturnStatic ? 'static' : 'self')
@@ -135,6 +155,13 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
                 $setter->addParameter($field->name)
                     ->setType($phpType)
                     ->setNullable($field->isNullable());
+
+                if ($field->deprecated) {
+                    $setter->addComment(
+                        '@deprecated'
+                        . (is_string($field->deprecated) ? ' ' . $field->deprecated : '')
+                    );
+                }
 
                 if ($buildVarDoc || $this->withReturnStatic) {
                     $setter->addComment("@param $phpTypeHint \$$field->name");
@@ -150,7 +177,7 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
 
     protected function depromoteParameter(Parameter $parameter): Parameter
     {
-        if (!$parameter instanceof PromotedParameter) {
+        if (! $parameter instanceof PromotedParameter) {
             return clone $parameter;
         }
 
@@ -163,5 +190,4 @@ class PropertiesBuilder implements ClassMembersBuilderInterface
 
         return $copy;
     }
-
 }

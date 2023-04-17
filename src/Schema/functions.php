@@ -38,7 +38,8 @@ function field(
     bool $required = false,
     mixed $default = null,
     array  $filters = [],
-    array $validators = []
+    array $validators = [],
+    bool|string $deprecated = false
 ): Field {
-    return new Field($name, $type, $required, $default, $filters, $validators);
+    return new Field($name, $type, $required, $default, $filters, $validators, $deprecated);
 }

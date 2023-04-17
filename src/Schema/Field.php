@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Klkvsk\DtoGenerator\Schema;
 
-use Klkvsk\DtoGenerator\Schema\Types\ListType;
 use Klkvsk\DtoGenerator\Schema\Types\Type;
 use Spatie\Cloneable\Cloneable;
 
@@ -23,6 +22,9 @@ class Field
         public readonly array  $filters = [],
         /** @var \Closure[] */
         public readonly array  $validators = [],
+
+        /** @param string|bool $deprecated pass string for a reason */
+        public readonly string|bool $deprecated = false,
     ) {
         $this->object = null;
     }
