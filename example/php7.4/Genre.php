@@ -19,11 +19,11 @@ namespace Klkvsk\DtoGenerator\Example\One;
  * @property-read string $value
  *
  * Cases:
- * @method static Genre ROMANCE
- * @method static Genre COMEDY
- * @method static Genre DRAMA
- * @method static Genre NON_FICTION
- * @method static Genre SCIENTIFIC_WORK
+ * @method static Genre ROMANCE()
+ * @method static Genre COMEDY()
+ * @method static Genre DRAMA()
+ * @method static Genre NON_FICTION()
+ * @method static Genre SCIENTIFIC_WORK()
  */
 final class Genre implements \JsonSerializable
 {

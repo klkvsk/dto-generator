@@ -116,7 +116,7 @@ class EnumLegacyBuilder implements EnumBuilderInterface
 
         $casesMap = [];
         foreach ($enum->getCases() as $case => $value) {
-            $class->addComment("@method static {$enum->getShortName()} $case");
+            $class->addComment("@method static {$enum->getShortName()} $case()");
             $casesMap[] = new Literal("self::$case()");
         }
 
